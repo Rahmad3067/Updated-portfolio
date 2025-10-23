@@ -38,6 +38,15 @@
     ]
   },
   "devDependencies": {
-    "@types/jest": "^27.5.0"
+    "@types/jest": "^27.5.0",
+    "gh-pages": "^6.3.0"
+  },
+  {
+  "homepage": "https://rahmad3067.github.io/Updated-portfolio",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   }
+}
+
 }
