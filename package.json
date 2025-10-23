@@ -2,6 +2,7 @@
   "name": "rahmad-portfolio",
   "version": "1.0.0",
   "private": true,
+  "homepage": "https://rahmad3067.github.io/Updated-portfolio",
   "dependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
@@ -17,7 +18,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -40,13 +43,5 @@
   "devDependencies": {
     "@types/jest": "^27.5.0",
     "gh-pages": "^6.3.0"
-  },
-  {
-  "homepage": "https://rahmad3067.github.io/Updated-portfolio",
-  "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
   }
-}
-
 }
