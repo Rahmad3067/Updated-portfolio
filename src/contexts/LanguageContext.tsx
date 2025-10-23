@@ -183,6 +183,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         "contact.form.subject": "Sujet",
         "contact.form.message": "Message",
         "contact.form.submit": "Envoyer le message",
+        "contact.form.sending": "Envoi en cours...",
+        "contact.form.success":
+          "Message envoyé avec succès ! Je vous répondrai bientôt.",
+        "contact.form.error":
+          "Erreur lors de l'envoi. Veuillez réessayer ou me contacter directement.",
         "contact.form.name.placeholder": "Votre nom complet",
         "contact.form.email.placeholder": "votre.email@example.com",
         "contact.form.subject.placeholder": "Sujet de votre message",
@@ -341,6 +346,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         "contact.form.subject": "Subject",
         "contact.form.message": "Message",
         "contact.form.submit": "Send message",
+        "contact.form.sending": "Sending...",
+        "contact.form.success":
+          "Message sent successfully! I'll get back to you soon.",
+        "contact.form.error":
+          "Error sending message. Please try again or contact me directly.",
         "contact.form.name.placeholder": "Your full name",
         "contact.form.email.placeholder": "your.email@example.com",
         "contact.form.subject.placeholder": "Subject of your message",

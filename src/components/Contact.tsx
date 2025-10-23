@@ -1,9 +1,44 @@
-import React from "react";
+import emailjs from "@emailjs/browser";
+import React, { useRef, useState } from "react";
+import { EMAILJS_CONFIG } from "../config/emailjs";
 import { useLanguage } from "../contexts/LanguageContext";
 import "./Contact.css";
 
 const Contact: React.FC = () => {
   const { t } = useLanguage();
+  const form = useRef<HTMLFormElement>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+
+  const sendEmail = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+
+    // EmailJS configuration
+    const { SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } = EMAILJS_CONFIG;
+
+    if (form.current) {
+      emailjs
+        .sendForm(SERVICE_ID, TEMPLATE_ID, form.current, PUBLIC_KEY)
+        .then(
+          (result) => {
+            console.log("Email sent successfully:", result.text);
+            setSubmitStatus("success");
+            form.current?.reset();
+          },
+          (error) => {
+            console.error("Email sending failed:", error.text);
+            setSubmitStatus("error");
+          }
+        )
+        .finally(() => {
+          setIsSubmitting(false);
+        });
+    }
+  };
 
   const contactInfo = [
     {
@@ -77,7 +112,20 @@ const Contact: React.FC = () => {
           <div className="contact-form">
             <div className="card">
               <h3>{t("contact.form.title")}</h3>
-              <form className="form">
+
+              {/* Status Messages */}
+              {submitStatus === "success" && (
+                <div className="form-status success">
+                  ✅ {t("contact.form.success")}
+                </div>
+              )}
+              {submitStatus === "error" && (
+                <div className="form-status error">
+                  ❌ {t("contact.form.error")}
+                </div>
+              )}
+
+              <form ref={form} onSubmit={sendEmail} className="form">
                 <div className="form-group">
                   <label htmlFor="name">{t("contact.form.name")}</label>
                   <input
@@ -118,8 +166,19 @@ const Contact: React.FC = () => {
                     placeholder={t("contact.form.message.placeholder")}
                   ></textarea>
                 </div>
-                <button type="submit" className="btn btn-primary form-submit">
-                  {t("contact.form.submit")}
+                <button
+                  type="submit"
+                  className="btn btn-primary form-submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner"></span>
+                      {t("contact.form.sending")}
+                    </>
+                  ) : (
+                    t("contact.form.submit")
+                  )}
                 </button>
               </form>
             </div>
