@@ -9,48 +9,40 @@ interface WarehouseItem {
   width: number;
   height: number;
   color: string;
+  layer: string;
+}
+
+interface Layer {
+  id: string;
+  name: string;
+  visible: boolean;
+  active: boolean;
 }
 
 const RoadEditorDemo: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [items, setItems] = useState<WarehouseItem[]>([
-    {
-      id: "1",
-      type: "storage",
-      x: 50,
-      y: 50,
-      width: 100,
-      height: 60,
-      color: "#4CAF50",
-    },
-    {
-      id: "2",
-      type: "pallet",
-      x: 200,
-      y: 80,
-      width: 80,
-      height: 40,
-      color: "#FF9800",
-    },
-    {
-      id: "3",
-      type: "robot",
-      x: 300,
-      y: 100,
-      width: 30,
-      height: 30,
-      color: "#2196F3",
-    },
-  ]);
+  const [items, setItems] = useState<WarehouseItem[]>([]);
   const [selectedTool, setSelectedTool] = useState<
-    "storage" | "pallet" | "robot" | "path"
-  >("storage");
+    "move" | "storage" | "pallet" | "robot" | "path"
+  >("move");
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [layers, setLayers] = useState<Layer[]>([
+    { id: "layer1", name: "Layer 1", visible: true, active: true },
+    { id: "layer2", name: "Layer 2", visible: true, active: false },
+  ]);
+  const [currentCoords, setCurrentCoords] = useState({ x: 0, y: 0 });
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [drawingPreview, setDrawingPreview] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
 
   const drawCanvas = () => {
     const canvas = canvasRef.current;
@@ -62,42 +54,90 @@ const RoadEditorDemo: React.FC = () => {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Apply zoom and pan transformations
+    // Apply transformations
     ctx.save();
     ctx.translate(pan.x, pan.y);
     ctx.scale(zoom, zoom);
 
     // Draw grid
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth = 1 / zoom;
-    const gridSize = 20;
-    for (let i = 0; i < canvas.width / zoom; i += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(i, 0);
-      ctx.lineTo(i, canvas.height / zoom);
-      ctx.stroke();
-    }
-    for (let i = 0; i < canvas.height / zoom; i += gridSize) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(canvas.width / zoom, i);
-      ctx.stroke();
+    drawGrid(ctx, canvas);
+
+    // Draw items
+    items.forEach((item) => {
+      const layer = layers.find((l) => l.id === item.layer);
+      if (layer && layer.visible) {
+        drawItem(ctx, item);
+      }
+    });
+
+    // Draw selection highlight
+    if (selectedItem) {
+      const item = items.find((i) => i.id === selectedItem);
+      if (item) {
+        drawSelectionHighlight(ctx, item);
+      }
     }
 
-    // Draw items with detailed shapes
-    items.forEach((item) => {
-      drawDetailedItem(ctx, item);
-    });
+    // Draw drawing preview
+    if (drawingPreview && isDrawing) {
+      drawDrawingPreview(ctx, drawingPreview);
+    }
 
     ctx.restore();
   };
 
-  const drawDetailedItem = (
+  const drawGrid = (
     ctx: CanvasRenderingContext2D,
-    item: WarehouseItem
+    canvas: HTMLCanvasElement
   ) => {
-    const centerX = item.x + item.width / 2;
-    const centerY = item.y + item.height / 2;
+    const gridSize = 20;
+    const startX = Math.floor(-pan.x / zoom / gridSize) * gridSize;
+    const startY = Math.floor(-pan.y / zoom / gridSize) * gridSize;
+    const endX = Math.ceil((canvas.width - pan.x) / zoom / gridSize) * gridSize;
+    const endY =
+      Math.ceil((canvas.height - pan.y) / zoom / gridSize) * gridSize;
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1;
+
+    // Vertical lines
+    for (let x = startX; x <= endX; x += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(x, startY);
+      ctx.lineTo(x, endY);
+      ctx.stroke();
+    }
+
+    // Horizontal lines
+    for (let y = startY; y <= endY; y += gridSize) {
+      ctx.beginPath();
+      ctx.moveTo(startX, y);
+      ctx.lineTo(endX, y);
+      ctx.stroke();
+    }
+
+    // Draw axis labels
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.font = "10px Arial";
+    ctx.textAlign = "center";
+
+    // X-axis labels
+    for (let x = startX; x <= endX; x += gridSize * 2) {
+      ctx.fillText((x / gridSize).toString(), x, startY - 5);
+    }
+
+    // Y-axis labels
+    for (let y = startY; y <= endY; y += gridSize * 2) {
+      ctx.save();
+      ctx.translate(startX - 15, y);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText((y / gridSize).toString(), 0, 0);
+      ctx.restore();
+    }
+  };
+
+  const drawItem = (ctx: CanvasRenderingContext2D, item: WarehouseItem) => {
+    ctx.save();
 
     switch (item.type) {
       case "storage":
@@ -113,105 +153,69 @@ const RoadEditorDemo: React.FC = () => {
         drawRobotPath(ctx, item);
         break;
     }
+
+    ctx.restore();
   };
 
   const drawStorageZone = (
     ctx: CanvasRenderingContext2D,
     item: WarehouseItem
   ) => {
-    // Draw storage rack structure
+    // Storage rack structure
     ctx.fillStyle = item.color;
     ctx.fillRect(item.x, item.y, item.width, item.height);
 
-    // Draw rack shelves
+    // Rack shelves
     ctx.strokeStyle = "#2E7D32";
     ctx.lineWidth = 2;
-    const shelfCount = Math.floor(item.height / 20);
-    for (let i = 1; i < shelfCount; i++) {
-      const shelfY = item.y + (item.height / shelfCount) * i;
+    for (let i = 1; i < 4; i++) {
+      const shelfY = item.y + (item.height / 4) * i;
       ctx.beginPath();
       ctx.moveTo(item.x, shelfY);
       ctx.lineTo(item.x + item.width, shelfY);
       ctx.stroke();
     }
 
-    // Draw vertical supports
-    const supportCount = Math.floor(item.width / 30);
-    for (let i = 1; i < supportCount; i++) {
-      const supportX = item.x + (item.width / supportCount) * i;
+    // Vertical supports
+    for (let i = 1; i < 3; i++) {
+      const supportX = item.x + (item.width / 3) * i;
       ctx.beginPath();
       ctx.moveTo(supportX, item.y);
       ctx.lineTo(supportX, item.y + item.height);
       ctx.stroke();
     }
 
-    // Draw label
+    // Label
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 10px Arial";
+    ctx.font = "10px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(
-      "STORAGE",
-      item.x + item.width / 2,
-      item.y + item.height / 2 + 3
-    );
+    ctx.fillText("Storage", item.x + item.width / 2, item.y + item.height / 2);
   };
 
   const drawPalletZone = (
     ctx: CanvasRenderingContext2D,
     item: WarehouseItem
   ) => {
-    // Draw pallet zone background
+    // Pallet base
     ctx.fillStyle = item.color;
     ctx.fillRect(item.x, item.y, item.width, item.height);
 
-    // Draw pallets
-    const palletWidth = 20;
-    const palletHeight = 15;
-    const palletsPerRow = Math.floor(item.width / (palletWidth + 5));
-    const palletRows = Math.floor(item.height / (palletHeight + 5));
-
-    for (let row = 0; row < palletRows; row++) {
-      for (let col = 0; col < palletsPerRow; col++) {
-        const palletX = item.x + 5 + col * (palletWidth + 5);
-        const palletY = item.y + 5 + row * (palletHeight + 5);
-
-        // Draw pallet base
-        ctx.fillStyle = "#8D6E63";
-        ctx.fillRect(palletX, palletY, palletWidth, palletHeight);
-
-        // Draw pallet slats
-        ctx.strokeStyle = "#5D4037";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(palletX, palletY + 3);
-        ctx.lineTo(palletX + palletWidth, palletY + 3);
-        ctx.moveTo(palletX, palletY + 6);
-        ctx.lineTo(palletX + palletWidth, palletY + 6);
-        ctx.moveTo(palletX, palletY + 9);
-        ctx.lineTo(palletX + palletWidth, palletY + 9);
-        ctx.moveTo(palletX, palletY + 12);
-        ctx.lineTo(palletX + palletWidth, palletY + 12);
-        ctx.stroke();
-
-        // Draw vertical supports
-        ctx.beginPath();
-        ctx.moveTo(palletX + 2, palletY);
-        ctx.lineTo(palletX + 2, palletY + palletHeight);
-        ctx.moveTo(palletX + palletWidth - 2, palletY);
-        ctx.lineTo(palletX + palletWidth - 2, palletY + palletHeight);
-        ctx.stroke();
-      }
+    // Pallet slats
+    ctx.strokeStyle = "#E65100";
+    ctx.lineWidth = 2;
+    for (let i = 1; i < 4; i++) {
+      const slatY = item.y + (item.height / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(item.x + 5, slatY);
+      ctx.lineTo(item.x + item.width - 5, slatY);
+      ctx.stroke();
     }
 
-    // Draw label
+    // Label
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 10px Arial";
+    ctx.font = "10px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(
-      "PALLETS",
-      item.x + item.width / 2,
-      item.y + item.height / 2 + 3
-    );
+    ctx.fillText("Pallet", item.x + item.width / 2, item.y + item.height / 2);
   };
 
   const drawWarehouseRobot = (
@@ -221,146 +225,101 @@ const RoadEditorDemo: React.FC = () => {
     const centerX = item.x + item.width / 2;
     const centerY = item.y + item.height / 2;
 
-    // Draw robot body (rounded rectangle)
+    // Robot body
     ctx.fillStyle = item.color;
-    ctx.beginPath();
-    ctx.roundRect(item.x, item.y, item.width, item.height, 5);
-    ctx.fill();
+    ctx.fillRect(item.x, item.y, item.width, item.height);
 
-    // Draw robot wheels
-    ctx.fillStyle = "#333";
-    const wheelRadius = 4;
+    // Robot details
+    ctx.fillStyle = "#1976D2";
+    ctx.fillRect(item.x + 5, item.y + 5, item.width - 10, item.height - 10);
+
+    // Wheels
+    ctx.fillStyle = "#424242";
     ctx.beginPath();
-    ctx.arc(item.x + 6, item.y + item.height - 6, wheelRadius, 0, 2 * Math.PI);
+    ctx.arc(item.x + 5, item.y + item.height - 5, 3, 0, 2 * Math.PI);
     ctx.fill();
     ctx.beginPath();
     ctx.arc(
-      item.x + item.width - 6,
-      item.y + item.height - 6,
-      wheelRadius,
+      item.x + item.width - 5,
+      item.y + item.height - 5,
+      3,
       0,
       2 * Math.PI
     );
     ctx.fill();
 
-    // Draw robot sensors
-    ctx.fillStyle = "#FFD700";
-    ctx.beginPath();
-    ctx.arc(centerX, item.y + 4, 2, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Draw robot arms/lift mechanism
-    ctx.strokeStyle = "#666";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(centerX - 3, item.y + 8);
-    ctx.lineTo(centerX - 8, item.y + 3);
-    ctx.moveTo(centerX + 3, item.y + 8);
-    ctx.lineTo(centerX + 8, item.y + 3);
-    ctx.stroke();
-
-    // Draw robot status indicator
-    ctx.fillStyle = "#4CAF50";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 2, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Draw label
+    // Label
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 8px Arial";
+    ctx.font = "10px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("ROBOT", centerX, item.y + item.height + 12);
+    ctx.fillText("Robot", centerX, centerY);
   };
 
   const drawRobotPath = (
     ctx: CanvasRenderingContext2D,
     item: WarehouseItem
   ) => {
-    // Draw path as a curved line
     ctx.strokeStyle = item.color;
-    ctx.lineWidth = 8;
-    ctx.lineCap = "round";
-
-    // Create a curved path
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]);
     ctx.beginPath();
     ctx.moveTo(item.x, item.y);
-
-    // Add curves based on path dimensions
-    const controlX1 = item.x + item.width * 0.3;
-    const controlY1 = item.y + item.height * 0.2;
-    const controlX2 = item.x + item.width * 0.7;
-    const controlY2 = item.y + item.height * 0.8;
-
-    ctx.bezierCurveTo(
-      controlX1,
-      controlY1,
-      controlX2,
-      controlY2,
-      item.x + item.width,
-      item.y + item.height
-    );
+    ctx.lineTo(item.x + item.width, item.y + item.height);
     ctx.stroke();
+    ctx.setLineDash([]);
+  };
 
-    // Draw path direction arrows
-    const arrowCount = 3;
-    for (let i = 1; i <= arrowCount; i++) {
-      const t = i / (arrowCount + 1);
-      const arrowX = item.x + item.width * t;
-      const arrowY = item.y + item.height * t;
+  const drawSelectionHighlight = (
+    ctx: CanvasRenderingContext2D,
+    item: WarehouseItem
+  ) => {
+    ctx.strokeStyle = "#FFD700";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([3, 3]);
+    ctx.strokeRect(item.x - 2, item.y - 2, item.width + 4, item.height + 4);
+    ctx.setLineDash([]);
+  };
 
-      // Calculate direction
-      const nextT = (i + 0.1) / (arrowCount + 1);
-      const nextX = item.x + item.width * nextT;
-      const nextY = item.y + item.height * nextT;
-
-      const angle = Math.atan2(nextY - arrowY, nextX - arrowX);
-
-      // Draw arrow
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.moveTo(arrowX, arrowY);
-      ctx.lineTo(
-        arrowX - 6 * Math.cos(angle - 0.5),
-        arrowY - 6 * Math.sin(angle - 0.5)
-      );
-      ctx.lineTo(
-        arrowX - 6 * Math.cos(angle + 0.5),
-        arrowY - 6 * Math.sin(angle + 0.5)
-      );
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // Draw path label
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 10px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("PATH", item.x + item.width / 2, item.y + item.height / 2 + 3);
+  const drawDrawingPreview = (
+    ctx: CanvasRenderingContext2D,
+    preview: { x: number; y: number; width: number; height: number }
+  ) => {
+    ctx.strokeStyle = "#FFD700";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(preview.x, preview.y, preview.width, preview.height);
+    ctx.setLineDash([]);
   };
 
   const getItemAtPoint = (x: number, y: number): string | null => {
-    // Convert screen coordinates to canvas coordinates
-    const canvasX = (x - pan.x) / zoom;
-    const canvasY = (y - pan.y) / zoom;
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
 
-    // Check items in reverse order (top items first)
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const canvasX = (x - rect.left) * scaleX;
+    const canvasY = (y - rect.top) * scaleY;
+
+    // Transform coordinates considering zoom and pan
+    const worldX = (canvasX - pan.x) / zoom;
+    const worldY = (canvasY - pan.y) / zoom;
+
+    // Check items in reverse order (top to bottom)
     for (let i = items.length - 1; i >= 0; i--) {
       const item = items[i];
       if (
-        canvasX >= item.x &&
-        canvasX <= item.x + item.width &&
-        canvasY >= item.y &&
-        canvasY <= item.y + item.height
+        worldX >= item.x &&
+        worldX <= item.x + item.width &&
+        worldY >= item.y &&
+        worldY <= item.y + item.height
       ) {
         return item.id;
       }
     }
     return null;
   };
-
-  useEffect(() => {
-    drawCanvas();
-  }, [items]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -370,86 +329,28 @@ const RoadEditorDemo: React.FC = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Check if clicking on an existing item
-    const itemId = getItemAtPoint(x, y);
-    if (itemId) {
-      // Start dragging existing item
-      setDraggedItem(itemId);
-      const item = items.find((i) => i.id === itemId);
-      if (item) {
-        const canvasX = (x - pan.x) / zoom;
-        const canvasY = (y - pan.y) / zoom;
-        setDragOffset({
-          x: canvasX - item.x,
-          y: canvasY - item.y,
-        });
+    if (selectedTool === "move") {
+      const itemId = getItemAtPoint(x, y);
+      if (itemId) {
+        setDraggedItem(itemId);
+        const item = items.find((i) => i.id === itemId);
+        if (item) {
+          setDragOffset({
+            x: x - (item.x * zoom + pan.x),
+            y: y - (item.y * zoom + pan.y),
+          });
+        }
+        setSelectedItem(itemId);
+      } else {
+        setSelectedItem(null);
       }
-      return;
+    } else {
+      setIsDrawing(true);
+      setStartPos({ x, y });
     }
-
-    // Start drawing new item
-    setStartPos({ x, y });
-    setIsDrawing(true);
-  };
-
-  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Handle dragging
-    if (draggedItem) {
-      const canvasX = (x - pan.x) / zoom;
-      const canvasY = (y - pan.y) / zoom;
-
-      setItems(
-        items.map((item) =>
-          item.id === draggedItem
-            ? { ...item, x: canvasX - dragOffset.x, y: canvasY - dragOffset.y }
-            : item
-        )
-      );
-
-      setDraggedItem(null);
-      return;
-    }
-
-    // Handle drawing new item
-    if (!isDrawing) return;
-
-    const width = Math.abs(x - startPos.x);
-    const height = Math.abs(y - startPos.y);
-
-    if (width > 10 && height > 10) {
-      const newItem: WarehouseItem = {
-        id: Date.now().toString(),
-        type: selectedTool,
-        x: Math.min(startPos.x, x),
-        y: Math.min(startPos.y, y),
-        width,
-        height,
-        color:
-          selectedTool === "storage"
-            ? "#4CAF50"
-            : selectedTool === "pallet"
-            ? "#FF9800"
-            : selectedTool === "robot"
-            ? "#2196F3"
-            : "#9C27B0",
-      };
-
-      setItems([...items, newItem]);
-    }
-
-    setIsDrawing(false);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!draggedItem) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -457,132 +358,361 @@ const RoadEditorDemo: React.FC = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const canvasX = (x - pan.x) / zoom;
-    const canvasY = (y - pan.y) / zoom;
+    // Update coordinates display
+    const worldX = (x - pan.x) / zoom;
+    const worldY = (y - pan.y) / zoom;
+    setCurrentCoords({ x: worldX, y: worldY });
 
-    // Update item position in real-time
-    setItems(
-      items.map((item) =>
-        item.id === draggedItem
-          ? { ...item, x: canvasX - dragOffset.x, y: canvasY - dragOffset.y }
-          : item
-      )
-    );
+    if (draggedItem) {
+      const item = items.find((i) => i.id === draggedItem);
+      if (item) {
+        const newX = (x - dragOffset.x - pan.x) / zoom;
+        const newY = (y - dragOffset.y - pan.y) / zoom;
+
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === draggedItem ? { ...i, x: newX, y: newY } : i
+          )
+        );
+      }
+    }
+
+    // Update drawing preview
+    if (isDrawing && selectedTool !== "move") {
+      const worldStartX = (startPos.x - pan.x) / zoom;
+      const worldStartY = (startPos.y - pan.y) / zoom;
+      const worldEndX = (x - pan.x) / zoom;
+      const worldEndY = (y - pan.y) / zoom;
+
+      const previewX = Math.min(worldStartX, worldEndX);
+      const previewY = Math.min(worldStartY, worldEndY);
+      const previewWidth = Math.abs(worldEndX - worldStartX);
+      const previewHeight = Math.abs(worldEndY - worldStartY);
+
+      setDrawingPreview({
+        x: previewX,
+        y: previewY,
+        width: previewWidth,
+        height: previewHeight,
+      });
+    }
   };
 
-  const clearCanvas = () => {
-    setItems([]);
+  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDrawing && selectedTool !== "move") {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Convert screen coordinates to world coordinates
+      const worldStartX = (startPos.x - pan.x) / zoom;
+      const worldStartY = (startPos.y - pan.y) / zoom;
+      const worldEndX = (x - pan.x) / zoom;
+      const worldEndY = (y - pan.y) / zoom;
+
+      // Calculate proper dimensions
+      const itemX = Math.min(worldStartX, worldEndX);
+      const itemY = Math.min(worldStartY, worldEndY);
+      const itemWidth = Math.abs(worldEndX - worldStartX);
+      const itemHeight = Math.abs(worldEndY - worldStartY);
+
+      // Only create item if it has minimum size
+      if (itemWidth > 5 && itemHeight > 5) {
+        const newItem: WarehouseItem = {
+          id: Date.now().toString(),
+          type: selectedTool as "storage" | "pallet" | "robot" | "path",
+          x: itemX,
+          y: itemY,
+          width: itemWidth,
+          height: itemHeight,
+          color:
+            selectedTool === "storage"
+              ? "#4CAF50"
+              : selectedTool === "pallet"
+              ? "#FF9800"
+              : selectedTool === "robot"
+              ? "#2196F3"
+              : "#9C27B0",
+          layer: layers.find((l) => l.active)?.id || "layer1",
+        };
+
+        setItems((prev) => [...prev, newItem]);
+      }
+    }
+
+    setIsDrawing(false);
+    setDraggedItem(null);
+    setDrawingPreview(null);
   };
+
+  const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(0.1, Math.min(3, zoom * delta));
+
+    // Zoom towards mouse position
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const worldX = (mouseX - pan.x) / zoom;
+      const worldY = (mouseY - pan.y) / zoom;
+
+      const newPanX = mouseX - worldX * newZoom;
+      const newPanY = mouseY - worldY * newZoom;
+
+      setPan({ x: newPanX, y: newPanY });
+    }
+
+    setZoom(newZoom);
+  };
+
+  useEffect(() => {
+    drawCanvas();
+  }, [items, zoom, pan, selectedItem, layers]);
 
   return (
     <div className="road-editor-demo">
-      <div className="demo-header">
-        <h3>Road Editor - Warehouse Layout Designer</h3>
-        <p>
-          Design and configure robotic warehouse layouts with storage zones,
-          pallet areas, and robot paths.
-        </p>
-      </div>
-
-      <div className="demo-toolbar">
-        <div className="tool-buttons">
-          <button
-            className={`tool-btn ${selectedTool === "storage" ? "active" : ""}`}
-            onClick={() => setSelectedTool("storage")}
-          >
-            🏪 Storage Zone
-          </button>
-          <button
-            className={`tool-btn ${selectedTool === "pallet" ? "active" : ""}`}
-            onClick={() => setSelectedTool("pallet")}
-          >
-            📦 Pallet Zone
-          </button>
-          <button
-            className={`tool-btn ${selectedTool === "robot" ? "active" : ""}`}
-            onClick={() => setSelectedTool("robot")}
-          >
-            🤖 Robot
-          </button>
-          <button
-            className={`tool-btn ${selectedTool === "path" ? "active" : ""}`}
-            onClick={() => setSelectedTool("path")}
-          >
-            🛤️ Path
-          </button>
+      {/* Top Navigation Bar */}
+      <div className="editor-header">
+        <div className="header-left">
+          <div className="project-info">
+            <span className="project-icon">📁</span>
+            <span className="project-name">No Project / Draft Mode</span>
+          </div>
         </div>
-        <div className="zoom-controls">
-          <button
-            className="zoom-btn"
-            onClick={() => setZoom(Math.max(0.5, zoom - 0.1))}
-            title="Zoom Out"
-          >
-            🔍−
-          </button>
-          <span className="zoom-level">{Math.round(zoom * 100)}%</span>
-          <button
-            className="zoom-btn"
-            onClick={() => setZoom(Math.min(2, zoom + 0.1))}
-            title="Zoom In"
-          >
-            🔍+
-          </button>
+        <div className="header-center">
+          <div className="logo">BALYO</div>
         </div>
-        <button className="clear-btn" onClick={clearCanvas}>
-          🗑️ Clear All
-        </button>
-      </div>
-
-      <div className="demo-canvas-container">
-        <canvas
-          ref={canvasRef}
-          width={600}
-          height={400}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-          className="demo-canvas"
-        />
-      </div>
-
-      <div className="demo-info">
-        <div className="info-item">
-          <span className="info-label">Items placed:</span>
-          <span className="info-value">{items.length}</span>
-        </div>
-        <div className="info-item">
-          <span className="info-label">Current tool:</span>
-          <span className="info-value">{selectedTool}</span>
+        <div className="header-right">
+          <button className="header-btn share-btn">Share</button>
+          <div className="header-icons">
+            <span className="icon">✏️</span>
+            <span className="icon">📋</span>
+            <span className="icon">📤</span>
+            <span className="icon">📋</span>
+            <span className="icon">⚙️</span>
+            <span className="icon">▼</span>
+          </div>
+          <span className="logout">Logout</span>
+          <button className="render-btn">Render2</button>
         </div>
       </div>
 
+      <div className="editor-content">
+        {/* Left Sidebar */}
+        <div className="sidebar">
+          <div className="tools-section">
+            <div className="section-title">Tools</div>
+            <div className="tool-buttons">
+              <button
+                className={`tool-btn ${
+                  selectedTool === "move" ? "active" : ""
+                }`}
+                onClick={() => setSelectedTool("move")}
+                title="Move Tool"
+              >
+                ✋
+              </button>
+              <button
+                className={`tool-btn ${
+                  selectedTool === "storage" ? "active" : ""
+                }`}
+                onClick={() => setSelectedTool("storage")}
+                title="Storage Zone"
+              >
+                📦
+              </button>
+              <button
+                className={`tool-btn ${
+                  selectedTool === "pallet" ? "active" : ""
+                }`}
+                onClick={() => setSelectedTool("pallet")}
+                title="Pallet Zone"
+              >
+                🏷️
+              </button>
+              <button
+                className={`tool-btn ${
+                  selectedTool === "robot" ? "active" : ""
+                }`}
+                onClick={() => setSelectedTool("robot")}
+                title="Robot"
+              >
+                🤖
+              </button>
+              <button
+                className={`tool-btn ${
+                  selectedTool === "path" ? "active" : ""
+                }`}
+                onClick={() => setSelectedTool("path")}
+                title="Robot Path"
+              >
+                🛤️
+              </button>
+            </div>
+          </div>
+
+          <div className="zoom-section">
+            <div className="section-title">Zoom</div>
+            <div className="zoom-controls">
+              <button
+                className="zoom-btn"
+                onClick={() => setZoom((prev) => Math.min(3, prev * 1.2))}
+                title="Zoom In"
+              >
+                🔍+
+              </button>
+              <span className="zoom-level">{Math.round(zoom * 100)}%</span>
+              <button
+                className="zoom-btn"
+                onClick={() => setZoom((prev) => Math.max(0.1, prev * 0.8))}
+                title="Zoom Out"
+              >
+                🔍-
+              </button>
+              <button
+                className="zoom-btn"
+                onClick={() => setZoom(1)}
+                title="Reset Zoom"
+              >
+                🎯
+              </button>
+            </div>
+            <div className="pan-controls">
+              <button
+                className="pan-btn"
+                onClick={() =>
+                  setPan((prev) => ({ x: prev.x + 50, y: prev.y }))
+                }
+                title="Pan Right"
+              >
+                →
+              </button>
+              <button
+                className="pan-btn"
+                onClick={() =>
+                  setPan((prev) => ({ x: prev.x - 50, y: prev.y }))
+                }
+                title="Pan Left"
+              >
+                ←
+              </button>
+              <button
+                className="pan-btn"
+                onClick={() =>
+                  setPan((prev) => ({ x: prev.x, y: prev.y + 50 }))
+                }
+                title="Pan Down"
+              >
+                ↓
+              </button>
+              <button
+                className="pan-btn"
+                onClick={() =>
+                  setPan((prev) => ({ x: prev.x, y: prev.y - 50 }))
+                }
+                title="Pan Up"
+              >
+                ↑
+              </button>
+              <button
+                className="pan-btn"
+                onClick={() => setPan({ x: 0, y: 0 })}
+                title="Reset Pan"
+              >
+                🎯
+              </button>
+            </div>
+          </div>
+
+          <div className="layers-section">
+            <div className="section-title">
+              <span>Layers</span>
+              <span className="layer-icon">💎</span>
+              <span className="filter-icon">🔍</span>
+              <span className="dropdown">▼</span>
+            </div>
+            <div className="layers-list">
+              {layers.map((layer) => (
+                <div
+                  key={layer.id}
+                  className={`layer-item ${layer.active ? "active" : ""}`}
+                >
+                  <span className="layer-visibility">👁️</span>
+                  <span className="layer-name">{layer.name}</span>
+                  {layer.active && <div className="active-indicator"></div>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Canvas Area */}
+        <div className="canvas-container">
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={600}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onWheel={handleWheel}
+            className="editor-canvas"
+          />
+
+          {/* Bottom Info Bar */}
+          <div className="canvas-info">
+            <div className="info-left">
+              <div className="shortcuts">
+                <div>(Hover) [F] / [B] Bring to front / to back</div>
+                <div>[Ctrl] + Click Select multiple shapes</div>
+                <div>[Alt] + Click Select nearest segment</div>
+                <div>[Space] Previous Tool : Move</div>
+                <div>(Hover) [L] / [U] Lock / Unlock shape</div>
+              </div>
+            </div>
+            <div className="info-right">
+              <div className="coordinates">
+                <div>Current shape: {selectedItem || "--------"}</div>
+                <div>X: {currentCoords.x.toFixed(2)} m</div>
+                <div>Y: {currentCoords.y.toFixed(2)} m</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Instructions */}
       <div className="demo-instructions">
-        <h4>Instructions:</h4>
+        <h4>🎮 Road Editor Demo Instructions:</h4>
         <ul>
-          <li>Select a tool from the toolbar above</li>
-          <li>Click and drag on empty space to place new items</li>
-          <li>Click and drag existing items to move them around</li>
-          <li>Use zoom controls to work with detailed layouts</li>
           <li>
-            🏪 <strong>Storage Zones</strong> - Green areas with rack structures
-            for inventory storage
+            <strong>Select Tools:</strong> Click on tool buttons in the left
+            sidebar
           </li>
           <li>
-            📦 <strong>Pallet Areas</strong> - Orange zones showing individual
-            pallets for loading/unloading
+            <strong>Draw Elements:</strong> Click and drag on the canvas to
+            create warehouse elements
           </li>
           <li>
-            🤖 <strong>Robots</strong> - Blue warehouse robots with sensors,
-            wheels, and lift mechanisms
+            <strong>Move Elements:</strong> Use the Move tool (hand icon) to
+            drag existing elements
           </li>
           <li>
-            🛤️ <strong>Paths</strong> - Purple curved routes with direction
-            arrows for robot navigation
+            <strong>Zoom:</strong> Use mouse wheel to zoom in/out
           </li>
-          <li>Use "Clear All" to reset the layout</li>
           <li>
-            Design your warehouse layout by placing and arranging items
-            strategically
+            <strong>Pan:</strong> Right-click and drag to pan around the canvas
+          </li>
+          <li>
+            <strong>Layers:</strong> Toggle layer visibility and switch between
+            layers
           </li>
         </ul>
       </div>

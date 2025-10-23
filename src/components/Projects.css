@@ -113,6 +113,25 @@
   text-align: center;
 }
 
+.demo-notice {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  background: rgba(102, 126, 234, 0.05);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.demo-notice small {
+  color: #888888;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.demo-notice strong {
+  color: #667eea;
+}
+
 @media (max-width: 768px) {
   .projects-grid {
     grid-template-columns: 1fr;
