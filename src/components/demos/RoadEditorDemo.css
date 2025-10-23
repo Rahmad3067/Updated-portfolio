@@ -1,0 +1,190 @@
+.road-editor-demo {
+  padding: 1rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+  color: #ffffff;
+}
+
+.demo-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.demo-header h3 {
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.demo-header p {
+  color: #cccccc;
+  font-size: 0.9rem;
+}
+
+.demo-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.tool-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tool-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.tool-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.clear-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff4444;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.clear-btn:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: #ff4444;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zoom-btn {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.zoom-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.zoom-level {
+  color: #888888;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 40px;
+  text-align: center;
+}
+
+.demo-canvas-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.demo-canvas {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: crosshair;
+  background: #0a0a0a;
+  transition: cursor 0.2s ease;
+}
+
+.demo-canvas:hover {
+  cursor: crosshair;
+}
+
+.demo-info {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: #888888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.demo-instructions {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.demo-instructions h4 {
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.demo-instructions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.demo-instructions li {
+  padding: 0.3rem 0;
+  color: #cccccc;
+  font-size: 0.9rem;
+}
+
+.demo-instructions li:before {
+  content: "•";
+  color: #667eea;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
