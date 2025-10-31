@@ -48,39 +48,50 @@ const Portfolio3DContent: React.FC<Portfolio3DContentProps> = ({
           <div className="section-content">
             <h2>{t("about.title")}</h2>
             <div className="about-details">
-              <div className="detail-item">
-                <h3>{t("about.presentation")}</h3>
-                <p>{t("about.presentation.text1")}</p>
-                <p>{t("about.presentation.text2")}</p>
+              <div className="detail-section">
+                <h3 className="detail-title">{t("about.presentation")}</h3>
+                <div className="detail-item">
+                  <div className="detail-content">
+                    <p>{t("about.presentation.text1")}</p>
+                    <p>{t("about.presentation.text2")}</p>
+                  </div>
+                </div>
               </div>
-              <div className="detail-item">
-                <h3>{t("about.personal")}</h3>
-                <div className="info-grid">
-                  <div className="info-item">
-                    <strong>{t("about.fullname")}</strong> Rahmad ABUZAR
-                  </div>
-                  <div className="info-item">
-                    <strong>{t("about.age")}</strong> 24 ans (12/11/2000)
-                  </div>
-                  <div className="info-item">
-                    <strong>{t("about.location")}</strong> 6B Rue leon 94270
-                    blum le kremlin bicetre
-                  </div>
-                  <div className="info-item">
-                    <strong>{t("about.phone")}</strong> +33 7 80 56 99 50
-                  </div>
-                  <div className="info-item">
-                    <strong>{t("about.email")}</strong> aboozar919@gmail.com
-                  </div>
-                  <div className="info-item">
-                    <strong>{t("about.linkedin")}</strong>
-                    <a
-                      href="https://www.linkedin.com/in/rahmad-abuzar-83a114214/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      rahmad-abuzar-83a114214
-                    </a>
+              <div className="detail-section">
+                <h3 className="detail-title">{t("about.personal")}</h3>
+                <div className="detail-item">
+                  <div className="info-grid">
+                    <div className="info-item">
+                      <span className="info-label">{t("about.fullname")}</span>
+                      <span className="info-value">Rahmad ABUZAR</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">{t("about.age")}</span>
+                      <span className="info-value">24 ans (12/11/2000)</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">{t("about.location")}</span>
+                      <span className="info-value">6B Rue leon 94270 blum le kremlin bicetre</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">{t("about.phone")}</span>
+                      <span className="info-value">+33 7 80 56 99 50</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">{t("about.email")}</span>
+                      <span className="info-value">aboozar919@gmail.com</span>
+                    </div>
+                    <div className="info-item">
+                      <span className="info-label">{t("about.linkedin")}</span>
+                      <a
+                        href="https://www.linkedin.com/in/rahmad-abuzar-83a114214/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="info-link"
+                      >
+                        rahmad-abuzar-83a114214
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
