@@ -215,6 +215,19 @@
 /* Experience section styles */
 .experience-timeline {
   margin-top: 2rem;
+  position: relative;
+}
+
+.experience-timeline::before {
+  display: none;
+}
+
+.education-timeline {
+  position: relative;
+}
+
+.education-timeline::before {
+  display: none;
 }
 
 .timeline-item {

@@ -53,8 +53,8 @@ const City3DCar = forwardRef<THREE.Object3D, {}>(function City3DCar(_, ref) {
     if (!car) return;
 
     // Basic kinematic car movement
-    const accel = 20;
-    const maxSpeed = 25;
+    const accel = 40; // 2x faster acceleration
+    const maxSpeed = 50; // 2x faster max speed
     const turnSpeed = 2.5;
 
     // Store velocity in userData

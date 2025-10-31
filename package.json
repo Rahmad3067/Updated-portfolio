@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "https://rahmad3067.github.io/Updated-portfolio",
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@react-three/drei": "^9.114.0",
     "@react-three/fiber": "^8.16.0",
     "@types/node": "^20.0.0",

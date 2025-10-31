@@ -102,21 +102,62 @@ export function createConcreteTexture() {
   canvas.height = 512;
   const ctx = canvas.getContext("2d")!;
   
-  // Base concrete color
-  ctx.fillStyle = "#7a7a7a";
+  // Base concrete color - darker gray for visibility
+  ctx.fillStyle = "#5a5a5a";
   ctx.fillRect(0, 0, 512, 512);
   
-  // Add concrete grain
-  for (let i = 0; i < 15000; i++) {
-    const gray = 100 + Math.random() * 50;
-    ctx.fillStyle = `rgba(${gray}, ${gray}, ${gray}, 0.5)`;
-    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+  // Add visible concrete panel pattern with strong contrast
+  // Horizontal panel lines (very visible)
+  for (let y = 0; y < 512; y += 64) {
+    ctx.fillStyle = "#444444";  // Much darker lines
+    ctx.fillRect(0, y, 512, 4);  // Thicker lines
+    ctx.fillStyle = "#707070";   // Lighter highlight
+    ctx.fillRect(0, y + 4, 512, 2);
+  }
+  
+  // Vertical panel lines (very visible)
+  for (let x = 0; x < 512; x += 64) {
+    ctx.fillStyle = "#444444";  // Much darker lines
+    ctx.fillRect(x, 0, 4, 512);  // Thicker lines
+    ctx.fillStyle = "#707070";   // Lighter highlight
+    ctx.fillRect(x + 4, 0, 2, 512);
+  }
+  
+  // Add concrete grain with high contrast for texture
+  for (let i = 0; i < 20000; i++) {
+    const variation = Math.random() > 0.5 ? 1 : -1;
+    const gray = 70 + variation * (25 + Math.random() * 35);
+    ctx.fillStyle = `rgba(${Math.max(40, Math.min(150, gray))}, ${Math.max(40, Math.min(150, gray))}, ${Math.max(40, Math.min(150, gray))}, 0.9)`;
+    const size = Math.random() > 0.7 ? 2 : 1;
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, size, size);
+  }
+  
+  // Add darker patches for concrete variation (more visible)
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random() * 512;
+    const y = Math.random() * 512;
+    const size = 15 + Math.random() * 25;
+    ctx.fillStyle = `rgba(60, 60, 60, 0.7)`;
+    ctx.fillRect(x, y, size, size);
+  }
+  
+  // Add lighter patches for contrast
+  for (let i = 0; i < 40; i++) {
+    const x = Math.random() * 512;
+    const y = Math.random() * 512;
+    const size = 10 + Math.random() * 15;
+    ctx.fillStyle = `rgba(120, 120, 120, 0.6)`;
+    ctx.fillRect(x, y, size, size);
   }
   
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(2, 2);
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = 4;
   return texture;
 }
 

@@ -24,12 +24,12 @@ const Contact: React.FC = () => {
       emailjs
         .sendForm(SERVICE_ID, TEMPLATE_ID, form.current, PUBLIC_KEY)
         .then(
-          (result) => {
+          (result: any) => {
             console.log("Email sent successfully:", result.text);
             setSubmitStatus("success");
             form.current?.reset();
           },
-          (error) => {
+          (error: any) => {
             console.error("Email sending failed:", error.text);
             setSubmitStatus("error");
           }

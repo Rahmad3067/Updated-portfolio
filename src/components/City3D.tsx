@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls, Text, Billboard, useGLTF, Environment } from "@react-three/drei";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -26,62 +26,103 @@ interface BuildingDef {
 }
 
 function Ground() {
-  const grassTexture = useMemo(() => createGrassTexture(), []);
   const [groundTexture, setGroundTexture] = useState<THREE.Texture | null>(null);
+  const [textureLoaded, setTextureLoaded] = useState(false);
+  const grassTexture = useMemo(() => createGrassTexture(), []);
   
-  // Load custom texture
-  // UPDATE THIS: Change the path to match your texture file
-  // If file is in src/components/texture/, use: process.env.PUBLIC_URL + "/../src/components/texture/yourfile.jpg"
-  // If file is in public folder, use: "/yourfile.jpg" or "/textures/yourfile.jpg"
-  const texturePath = "/textures/ground.jpg"; // ← UPDATE THIS to match your file location and name!
-  
+  // Load grass texture from Three.js-City repository - use it for all ground areas
   useEffect(() => {
     const loader = new TextureLoader();
-    loader.load(
-      texturePath,
-      (texture) => {
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(20, 20); // Adjust repeat: lower = larger tiles, higher = smaller tiles
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.generateMipmaps = true;
-        texture.anisotropy = 4;
-        setGroundTexture(texture);
-        console.log("Ground texture loaded successfully from:", texturePath);
-      },
-      undefined,
-      (error) => {
-        console.warn("Could not load ground texture from:", texturePath);
-        console.warn("Error:", error);
-        console.warn("Make sure your texture file is in the public folder.");
-        console.warn("Using procedural grass texture as fallback.");
-      }
-    );
-  }, [texturePath]);
+    // Try multiple paths to ensure we find the texture
+    const texturePaths = [
+      `${process.env.PUBLIC_URL || ''}/images/textures/grass.jpg`,
+      '/images/textures/grass.jpg',
+      './images/textures/grass.jpg',
+    ];
+    
+    let loaded = false;
+    for (const texturePath of texturePaths) {
+      loader.load(
+        texturePath,
+        (texture) => {
+          if (!loaded) {
+            loaded = true;
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(10, 10); // Lower repeat = larger, more visible texture
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.generateMipmaps = true;
+            texture.anisotropy = 4;
+            setGroundTexture(texture);
+            setTextureLoaded(true);
+            console.log("Ground grass texture loaded successfully from:", texturePath);
+          }
+        },
+        undefined,
+        (error) => {
+          if (texturePath === texturePaths[texturePaths.length - 1]) {
+            console.warn("Could not load ground texture from any path:", texturePaths);
+            console.warn("Error:", error);
+            console.warn("Using procedural grass texture as fallback.");
+          }
+        }
+      );
+    }
+  }, []);
   
+  // Always use downloaded grass texture if available, otherwise procedural
   const finalTexture = groundTexture || grassTexture;
   
+  // Ensure the ground plane covers the entire area and is visible
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow position={[0, 0, 0]}>
       <planeGeometry args={[200, 200, 10, 10]} />
       <meshStandardMaterial 
         map={finalTexture} 
         roughness={0.8} 
         metalness={0.1}
+        color={groundTexture ? "#ffffff" : undefined} // White base if texture loaded
       />
     </mesh>
   );
 }
 
 function RoadGrid() {
+  const [roadTexture, setRoadTexture] = useState<THREE.Texture | null>(null);
   const asphaltTexture = useMemo(() => createAsphaltTexture(), []);
   const roadMarkingTexture = useMemo(() => createRoadMarkingTexture(), []);
+  
+  useEffect(() => {
+    const loader = new TextureLoader();
+    const texturePath = `${process.env.PUBLIC_URL || ''}/images/textures/roadposx.png`;
+    loader.load(
+      texturePath,
+      (texture) => {
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(1, 10);
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = true;
+        texture.anisotropy = 4;
+        setRoadTexture(texture);
+        console.log("Road texture loaded successfully from:", texturePath);
+      },
+      undefined,
+      (error) => {
+        console.warn("Could not load road texture from:", texturePath, error);
+        console.warn("Using procedural texture as fallback");
+      }
+    );
+  }, []);
   
   const roads: JSX.Element[] = [];
   const roadWidth = 16;
   const roadHeight = 0.02;
   const markingHeight = 0.025; // Increased gap to prevent z-fighting
+  
+  const finalRoadTexture = roadTexture || asphaltTexture;
   
   // Vertical roads
   for (let i = -80; i <= 80; i += 20) {
@@ -89,7 +130,7 @@ function RoadGrid() {
     roads.push(
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[i, roadHeight, 0]} key={`v-road-${i}`}>
         <planeGeometry args={[roadWidth, 200]} />
-        <meshStandardMaterial map={asphaltTexture} roughness={0.9} metalness={0.1} depthWrite={true} />
+        <meshStandardMaterial map={finalRoadTexture} roughness={0.9} metalness={0.1} depthWrite={true} />
       </mesh>
     );
     // Road markings - higher above surface to prevent z-fighting
@@ -113,7 +154,7 @@ function RoadGrid() {
     roads.push(
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, roadHeight, i]} key={`h-road-${i}`}>
         <planeGeometry args={[200, roadWidth]} />
-        <meshStandardMaterial map={asphaltTexture} roughness={0.9} metalness={0.1} depthWrite={true} />
+        <meshStandardMaterial map={finalRoadTexture} roughness={0.9} metalness={0.1} depthWrite={true} />
       </mesh>
     );
     // Road markings - higher above surface
@@ -134,46 +175,198 @@ function RoadGrid() {
   return <group>{roads}</group>;
 }
 
+// Blinking Text Component - controls material opacity for blinking effect
+function BlinkingText({
+  children,
+  position,
+  rotation,
+  fontSize,
+  textOpacity,
+}: {
+  children: React.ReactNode;
+  position: [number, number, number];
+  rotation: [number, number, number];
+  fontSize: number;
+  textOpacity: number;
+}) {
+  const textRef = useRef<any>(null);
+
+  useFrame(() => {
+    if (textRef.current) {
+      // drei Text creates a mesh, traverse to find materials
+      textRef.current.traverse((child: THREE.Mesh) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          if (material) {
+            material.transparent = true;
+            material.opacity = textOpacity;
+          }
+        }
+      });
+    }
+  });
+
+  return (
+    <group ref={textRef}>
+      <Text
+        position={position}
+        rotation={rotation}
+        fontSize={fontSize}
+        color="#FFEE00"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.2}
+        outlineColor="#000000"
+      >
+        {children}
+      </Text>
+    </group>
+  );
+}
+
 // GLTF Model Building Component
 function GLTFBuilding({ def }: { def: BuildingDef }) {
   const { scene } = useGLTF(def.modelUrl!);
+  const { camera } = useThree();
   const clonedScene = useMemo(() => scene.clone(), [scene]);
+  const groupRef = useRef<THREE.Group>(null);
+  const [opacity, setOpacity] = useState(1);
+  
+  // Blinking animation for text
+  const [textOpacity, setTextOpacity] = useState(1);
+  
+  // Make building fade out when too close to camera and animate text blinking
+  useFrame((state) => {
+    if (groupRef.current) {
+      const buildingPos = new THREE.Vector3(...def.position);
+      const cameraPos = camera.position;
+      const distance = buildingPos.distanceTo(cameraPos);
+      
+      // Fade out when closer than 20 units, fully invisible at 12 units
+      const minDistance = 12;
+      const maxDistance = 20;
+      if (distance < minDistance) {
+        setOpacity(0);
+      } else if (distance < maxDistance) {
+        // Fade between minDistance and maxDistance
+        const fadeRange = maxDistance - minDistance;
+        const fadeAmount = (distance - minDistance) / fadeRange;
+        setOpacity(fadeAmount);
+      } else {
+        setOpacity(1);
+      }
+      
+      // Blinking effect - oscillate between 0.5 and 1.0
+      const blinkSpeed = 2; // Blinks per second
+      const blinkOpacity = 0.5 + 0.5 * (Math.sin(state.clock.elapsedTime * blinkSpeed * Math.PI) + 1) / 2;
+      setTextOpacity(blinkOpacity * opacity); // Multiply by building opacity
+      
+      // Apply opacity to all materials in the cloned scene
+      clonedScene.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const material = child.material as THREE.MeshStandardMaterial;
+          if (material) {
+            material.transparent = true;
+            material.opacity = opacity;
+          }
+        }
+      });
+    }
+  });
   
   return (
-    <group position={def.position}>
+    <group position={def.position} ref={groupRef}>
       <primitive 
         object={clonedScene} 
         scale={def.scale || 1} 
         castShadow 
         receiveShadow 
       />
-      <Billboard follow>
-        <Text 
-          position={[0, 15, 0]} 
-          fontSize={2.5} 
-          color="#ffffff" 
-          anchorX="center" 
-          anchorY="bottom"
-          outlineWidth={0.15}
-          outlineColor="#000000"
-          strokeWidth={0.05}
-          strokeColor="#000000"
-        >
-          {def.name}
-        </Text>
-      </Billboard>
+      {/* Building name on all 4 faces - light yellow and blinking */}
+      {/* Front face */}
+      <BlinkingText
+        position={[0, 12, 5]} 
+        rotation={[0, 0, 0]}
+        fontSize={1} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
+      {/* Back face */}
+      <BlinkingText
+        position={[0, 12, -5]} 
+        rotation={[0, Math.PI, 0]}
+        fontSize={1} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
+      {/* Right face */}
+      <BlinkingText
+        position={[5, 12, 0]} 
+        rotation={[0, Math.PI / 2, 0]}
+        fontSize={1} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
+      {/* Left face */}
+      <BlinkingText
+        position={[-5, 12, 0]} 
+        rotation={[0, -Math.PI / 2, 0]}
+        fontSize={1} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
     </group>
   );
 }
 
 // Procedural Building Component (fallback)
 function ProceduralBuilding({ def }: { def: BuildingDef }) {
+  const { camera } = useThree();
+  const groupRef = useRef<THREE.Group>(null);
+  const [opacity, setOpacity] = useState(1);
+  
   const brickTexture = useMemo(() => createBrickTexture(), []);
   const concreteTexture = useMemo(() => createConcreteTexture(), []);
   
   // Use brick for most buildings, concrete for some
+  // All buildings get textures - brick for about/experience/skills, concrete for projects/education/contact
   const useBrick = ["about", "experience", "skills"].includes(def.id);
   const wallTexture = useBrick ? brickTexture : concreteTexture;
+  
+  // Blinking animation for text
+  const [textOpacity, setTextOpacity] = useState(1);
+  
+  // Make building fade out when too close to camera and animate text blinking
+  useFrame((state) => {
+    if (groupRef.current) {
+      const buildingPos = new THREE.Vector3(...def.position);
+      const cameraPos = camera.position;
+      const distance = buildingPos.distanceTo(cameraPos);
+      
+      // Fade out when closer than 20 units, fully invisible at 12 units
+      const minDistance = 12;
+      const maxDistance = 20;
+      if (distance < minDistance) {
+        setOpacity(0);
+      } else if (distance < maxDistance) {
+        // Fade between minDistance and maxDistance
+        const fadeRange = maxDistance - minDistance;
+        const fadeAmount = (distance - minDistance) / fadeRange;
+        setOpacity(fadeAmount);
+      } else {
+        setOpacity(1);
+      }
+      
+      // Blinking effect - oscillate between 0.5 and 1.0
+      const blinkSpeed = 2; // Blinks per second
+      const blinkOpacity = 0.5 + 0.5 * (Math.sin(state.clock.elapsedTime * blinkSpeed * Math.PI) + 1) / 2;
+      setTextOpacity(blinkOpacity * opacity); // Multiply by building opacity
+    }
+  });
   
   // Window texture - darker squares on the walls
   const windowMaterial = useMemo(() => {
@@ -199,50 +392,102 @@ function ProceduralBuilding({ def }: { def: BuildingDef }) {
   }, []);
   
   return (
-    <group position={def.position}>
+    <group position={def.position} ref={groupRef}>
       {/* Main building body with texture */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[8, 12, 8]} />
-        <meshStandardMaterial map={wallTexture} roughness={0.7} metalness={0.1} />
+        <meshStandardMaterial 
+          map={wallTexture} 
+          roughness={0.7} 
+          metalness={0.1}
+          transparent
+          opacity={opacity}
+        />
       </mesh>
       
       {/* Windows on front face */}
       <mesh position={[0, 2, 4.01]} castShadow>
         <planeGeometry args={[7, 10]} />
-        <meshStandardMaterial map={windowMaterial} emissive="#000022" emissiveIntensity={0.3} />
+        <meshStandardMaterial 
+          map={windowMaterial} 
+          emissive="#000022" 
+          emissiveIntensity={0.3}
+          transparent
+          opacity={opacity}
+        />
       </mesh>
       
       {/* Windows on side faces */}
       <mesh position={[4.01, 2, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
         <planeGeometry args={[7, 10]} />
-        <meshStandardMaterial map={windowMaterial} emissive="#000022" emissiveIntensity={0.3} />
+        <meshStandardMaterial 
+          map={windowMaterial} 
+          emissive="#000022" 
+          emissiveIntensity={0.3}
+          transparent
+          opacity={opacity}
+        />
       </mesh>
       <mesh position={[-4.01, 2, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
         <planeGeometry args={[7, 10]} />
-        <meshStandardMaterial map={windowMaterial} emissive="#000022" emissiveIntensity={0.3} />
+        <meshStandardMaterial 
+          map={windowMaterial} 
+          emissive="#000022" 
+          emissiveIntensity={0.3}
+          transparent
+          opacity={opacity}
+        />
       </mesh>
       
       {/* Roof */}
       <mesh position={[0, 6.5, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <boxGeometry args={[12, 1, 12]} />
-        <meshStandardMaterial color="#3a3a3a" roughness={0.9} metalness={0.2} />
+        <meshStandardMaterial 
+          color="#3a3a3a" 
+          roughness={0.9} 
+          metalness={0.2}
+          transparent
+          opacity={opacity}
+        />
       </mesh>
       
-      <Billboard follow>
-        <Text 
-          position={[0, 8, 0]} 
-          fontSize={2.5} 
-          color="#ffffff" 
-          anchorX="center" 
-          anchorY="bottom"
-          outlineWidth={0.15}
-          outlineColor="#000000"
-          strokeWidth={0.05}
-          strokeColor="#000000"
-        >
-          {def.name}
-        </Text>
-      </Billboard>
+      {/* Building name on all 4 faces - light yellow and blinking */}
+      {/* Front face */}
+      <BlinkingText
+        position={[0, 5, 4.05]} 
+        rotation={[0, 0, 0]}
+        fontSize={0.833} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
+      {/* Back face */}
+      <BlinkingText
+        position={[0, 5, -4.05]} 
+        rotation={[0, Math.PI, 0]}
+        fontSize={0.833} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
+      {/* Right face */}
+      <BlinkingText
+        position={[4.05, 5, 0]} 
+        rotation={[0, Math.PI / 2, 0]}
+        fontSize={0.833} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
+      {/* Left face */}
+      <BlinkingText
+        position={[-4.05, 5, 0]} 
+        rotation={[0, -Math.PI / 2, 0]}
+        fontSize={0.833} 
+        textOpacity={textOpacity}
+      >
+        {def.name}
+      </BlinkingText>
     </group>
   );
 }
@@ -318,6 +563,35 @@ function ProximityDetector({
   return null;
 }
 
+function CarHint({
+  carRef,
+  message,
+}: {
+  carRef: React.RefObject<THREE.Object3D>;
+  message: string;
+}) {
+  const positionRef = useRef<THREE.Vector3>(new THREE.Vector3(0, 3, 0));
+  const [position, setPosition] = useState<[number, number, number]>([0, 3, 0]);
+  
+  useFrame(() => {
+    if (carRef.current) {
+      carRef.current.getWorldPosition(positionRef.current);
+      positionRef.current.y += 2.5;
+      setPosition([
+        positionRef.current.x,
+        positionRef.current.y,
+        positionRef.current.z,
+      ]);
+    }
+  });
+  
+  return (
+    <Html position={position} center style={{ pointerEvents: "none" }}>
+      <div className="city3d-hint">{message}</div>
+    </Html>
+  );
+}
+
 const City3D: React.FC<{ onSectionSelect: (id: string) => void }> = ({ onSectionSelect }) => {
   const [selectedSection, setSelectedSection] = useState<SectionId | null>(null);
   const [near, setNear] = useState<SectionId | null>(null);
@@ -376,13 +650,20 @@ const City3D: React.FC<{ onSectionSelect: (id: string) => void }> = ({ onSection
           <CityLayout buildings={buildings} />
           <City3DCar ref={carRef} />
           <ProximityDetector carRef={carRef} targets={targets} onNearChange={setNear} radius={15} />
-          <Html position={[0, 10, 0]} center style={{ pointerEvents: "none" }}>
-            <div className="city3d-hint">{near ? `Press Enter to open ${near}` : "Drive to a building"}</div>
-          </Html>
+          {!selectedSection && (
+            <CarHint 
+              carRef={carRef} 
+              message={near ? `Press Enter to open ${near}` : "Drive to a building"} 
+            />
+          )}
           <OrbitControls 
-            enablePan={false} 
-            enableZoom={false} 
-            enableRotate={false}
+            enablePan={true} 
+            enableZoom={true} 
+            enableRotate={true}
+            minDistance={5}
+            maxDistance={100}
+            minPolarAngle={Math.PI / 6}
+            maxPolarAngle={Math.PI / 2.2}
           />
         </Suspense>
       </Canvas>
