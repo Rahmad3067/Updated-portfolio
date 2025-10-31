@@ -14,6 +14,7 @@ import City3D from "./components/City3D";
 import Projects from "./components/Projects";
 import Skills from "./components/Skills";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { CarControlsProvider } from "./contexts/CarControlsContext";
 
 function App() {
   const [is3DMode, setIs3DMode] = useState(false);
@@ -71,16 +72,17 @@ function App() {
 
   return (
     <LanguageProvider>
-      <Router
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <div className="App">
+      <CarControlsProvider>
+        <Router
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <div className="App">
           {is3DMode ? (
             <>
-              <City3D onSectionSelect={handleSectionSelect} />
+              <City3D onSectionSelect={handleSectionSelect} onToggle3D={toggle3DMode} />
             </>
           ) : (
             <>
@@ -101,7 +103,8 @@ function App() {
             </>
           )}
         </div>
-      </Router>
+        </Router>
+      </CarControlsProvider>
     </LanguageProvider>
   );
 }

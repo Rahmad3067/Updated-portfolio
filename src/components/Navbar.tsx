@@ -87,9 +87,14 @@ const Navbar: React.FC<NavbarProps> = ({ is3DMode = false, onToggle3D }) => {
                 <button
                   className={`nav-toggle-3d-mobile ${is3DMode ? "active" : ""}`}
                   onClick={onToggle3D}
-                  title={is3DMode ? "Switch to 2D" : "Switch to 3D"}
+                  title={is3DMode ? "Switch to 2D" : "Switch to 3D (new)"}
                 >
-                  {is3DMode ? "🌍" : "🚀"}
+                  {is3DMode ? "🌍" : (
+                    <>
+                      <span className="nav-toggle-icon">🚀</span>
+                      <span className="nav-toggle-text-mobile">Switch to 3D (new)</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -105,7 +110,14 @@ const Navbar: React.FC<NavbarProps> = ({ is3DMode = false, onToggle3D }) => {
                 onClick={onToggle3D}
                 title={is3DMode ? "Switch to 2D" : "Switch to 3D"}
               >
-                {is3DMode ? "🌍" : "🚀"}
+                {is3DMode ? (
+                  "🌍"
+                ) : (
+                  <>
+                    <span className="nav-toggle-icon">🚀</span>
+                    <span className="nav-toggle-text">Switch to 3D (new)</span>
+                  </>
+                )}
               </button>
             )}
             <div

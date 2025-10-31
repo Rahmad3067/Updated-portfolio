@@ -13,6 +13,7 @@ import {
   createConcreteTexture,
   createGrassTexture,
 } from "./City3DTextures";
+import { useCarControls } from "../contexts/CarControlsContext";
 
 type SectionId = "about" | "experience" | "skills" | "projects" | "education" | "contact" | "hero";
 
@@ -592,10 +593,12 @@ function CarHint({
   );
 }
 
-const City3D: React.FC<{ onSectionSelect: (id: string) => void }> = ({ onSectionSelect }) => {
+const City3D: React.FC<{ onSectionSelect: (id: string) => void; onToggle3D?: () => void }> = ({ onSectionSelect, onToggle3D }) => {
   const [selectedSection, setSelectedSection] = useState<SectionId | null>(null);
   const [near, setNear] = useState<SectionId | null>(null);
   const carRef = useRef<THREE.Object3D>(null);
+  const controls = useCarControls();
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const buildings = useMemo<BuildingDef[]>(
     () => [
@@ -636,10 +639,30 @@ const City3D: React.FC<{ onSectionSelect: (id: string) => void }> = ({ onSection
     return () => window.removeEventListener("keydown", onKey);
   }, [near]);
 
+  // Detect touch device
+  useEffect(() => {
+    const checkTouch = () => {
+      setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    };
+    checkTouch();
+    window.addEventListener('resize', checkTouch);
+    return () => window.removeEventListener('resize', checkTouch);
+  }, []);
+
   const handleClose = () => setSelectedSection(null);
 
   return (
     <div className="city3d-container">
+      {onToggle3D && (
+        <button
+          className="city3d-back-to-2d"
+          onClick={onToggle3D}
+          title="Switch to 2D Portfolio"
+        >
+          <span className="back-icon">🌍</span>
+          <span className="back-text">Back to 2D</span>
+        </button>
+      )}
       <Canvas shadows camera={{ position: [0, 15, 30], fov: 60 }}>
         <color attach="background" args={["#0b1022"]} />
         <Suspense fallback={null}>
@@ -669,6 +692,96 @@ const City3D: React.FC<{ onSectionSelect: (id: string) => void }> = ({ onSection
       </Canvas>
 
       <Portfolio3DContent selectedSection={selectedSection} onClose={handleClose} />
+
+      {/* Mobile Touch Controls */}
+      {isTouchDevice && !selectedSection && (
+        <div className="city3d-touch-controls">
+          <div className="touch-controls-wrapper">
+            <div className="touch-controls-left">
+              <button
+                className="touch-control-btn touch-up"
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  controls.current.forward = true;
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  controls.current.forward = false;
+                }}
+                onMouseDown={() => controls.current.forward = true}
+                onMouseUp={() => controls.current.forward = false}
+                onMouseLeave={() => controls.current.forward = false}
+              >
+                ↑
+              </button>
+              <div className="touch-controls-horizontal">
+                <button
+                  className="touch-control-btn touch-left"
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    controls.current.left = true;
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    controls.current.left = false;
+                  }}
+                  onMouseDown={() => controls.current.left = true}
+                  onMouseUp={() => controls.current.left = false}
+                  onMouseLeave={() => controls.current.left = false}
+                >
+                  ←
+                </button>
+                <button
+                  className="touch-control-btn touch-down"
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    controls.current.back = true;
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    controls.current.back = false;
+                  }}
+                  onMouseDown={() => controls.current.back = true}
+                  onMouseUp={() => controls.current.back = false}
+                  onMouseLeave={() => controls.current.back = false}
+                >
+                  ↓
+                </button>
+                <button
+                  className="touch-control-btn touch-right"
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    controls.current.right = true;
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    controls.current.right = false;
+                  }}
+                  onMouseDown={() => controls.current.right = true}
+                  onMouseUp={() => controls.current.right = false}
+                  onMouseLeave={() => controls.current.right = false}
+                >
+                  →
+                </button>
+              </div>
+            </div>
+            <div className="touch-controls-right">
+              <button
+                className="touch-control-btn touch-interact"
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  if (near) {
+                    setSelectedSection(near);
+                  }
+                }}
+                title={near ? `Open ${near}` : "Drive to a building"}
+              >
+                {near ? `Open ${near}` : "Interact"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

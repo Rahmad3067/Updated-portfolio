@@ -2,15 +2,30 @@ import React, { forwardRef, useEffect, useMemo, useRef } from "react";
 import { useFrame, ThreeElements } from "@react-three/fiber";
 import * as THREE from "three";
 import { createCarPaintTexture } from "./City3DTextures";
+import { useCarControls } from "../contexts/CarControlsContext";
 
-function useKeyboard() {
+function useKeyboard(controls: React.MutableRefObject<{ forward: boolean; back: boolean; left: boolean; right: boolean }>) {
   const keys = useRef({ ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, a: false, s: false, d: false });
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (e.key in keys.current) (keys.current as any)[e.key] = true;
+      if (e.key in keys.current) {
+        (keys.current as any)[e.key] = true;
+        // Update shared controls
+        if (e.key === "ArrowUp" || e.key === "w") controls.current.forward = true;
+        if (e.key === "ArrowDown" || e.key === "s") controls.current.back = true;
+        if (e.key === "ArrowLeft" || e.key === "a") controls.current.left = true;
+        if (e.key === "ArrowRight" || e.key === "d") controls.current.right = true;
+      }
     };
     const up = (e: KeyboardEvent) => {
-      if (e.key in keys.current) (keys.current as any)[e.key] = false;
+      if (e.key in keys.current) {
+        (keys.current as any)[e.key] = false;
+        // Update shared controls
+        if (e.key === "ArrowUp" || e.key === "w") controls.current.forward = false;
+        if (e.key === "ArrowDown" || e.key === "s") controls.current.back = false;
+        if (e.key === "ArrowLeft" || e.key === "a") controls.current.left = false;
+        if (e.key === "ArrowRight" || e.key === "d") controls.current.right = false;
+      }
     };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
@@ -18,13 +33,14 @@ function useKeyboard() {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, []);
+  }, [controls]);
   return keys;
 }
 
 const City3DCar = forwardRef<THREE.Object3D, {}>(function City3DCar(_, ref) {
   const groupRef = useRef<THREE.Group | null>(null);
-  const keys = useKeyboard();
+  const controls = useCarControls();
+  const keys = useKeyboard(controls);
   const zoomDistanceRef = useRef(14); // Default zoom distance
 
   // Handle mouse wheel zoom
@@ -61,10 +77,11 @@ const City3DCar = forwardRef<THREE.Object3D, {}>(function City3DCar(_, ref) {
     if (!car.userData.vel) car.userData.vel = new THREE.Vector3();
     const vel: THREE.Vector3 = car.userData.vel;
 
-    const forward = keys.current.ArrowUp || keys.current.w;
-    const back = keys.current.ArrowDown || keys.current.s;
-    const left = keys.current.ArrowLeft || keys.current.a;
-    const right = keys.current.ArrowRight || keys.current.d;
+    // Use shared controls (keyboard + touch)
+    const forward = keys.current.ArrowUp || keys.current.w || controls.current.forward;
+    const back = keys.current.ArrowDown || keys.current.s || controls.current.back;
+    const left = keys.current.ArrowLeft || keys.current.a || controls.current.left;
+    const right = keys.current.ArrowRight || keys.current.d || controls.current.right;
 
     // accelerate / brake
     if (forward) vel.z -= accel * dt;
