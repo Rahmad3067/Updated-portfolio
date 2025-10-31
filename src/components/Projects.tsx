@@ -26,6 +26,7 @@ const Projects: React.FC = () => {
       description: t("projects.roadeditor.description"),
       technologies: ["React", "TypeScript", "MUI", "Three.js"],
       status: "completed",
+      image: `${process.env.PUBLIC_URL || ''}/images/road%20editor%20image.jfif`,
     },
     {
       id: "robot-interface",
@@ -208,6 +209,7 @@ const Projects: React.FC = () => {
           {projects.map((project) => (
             <div key={project.id} className="project-card">
               <div className="card">
+                {project.image && <img src={project.image} alt={project.title} className="project-image" />}
                 <div className="project-header">
                   <h3 className="project-title">{project.title}</h3>
                   <span

@@ -32,7 +32,7 @@ const About: React.FC = () => {
                 <div className="info-item">
                   <span className="info-label">{t("about.location")}</span>
                   <span className="info-value">
-                    6B Rue leon 94270 blum le kremlin bicetre
+                    Paris
                   </span>
                 </div>
                 <div className="info-item">

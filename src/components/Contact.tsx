@@ -56,7 +56,7 @@ const Contact: React.FC = () => {
     {
       icon: "📍",
       label: t("contact.labels.location"),
-      value: "6B Rue leon 94270 blum le kremlin bicetre",
+      value: "Paris",
       link: null,
     },
     {
