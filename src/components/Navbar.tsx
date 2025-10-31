@@ -3,7 +3,12 @@ import { useLanguage } from "../contexts/LanguageContext";
 import LanguageSwitcher from "./LanguageSwitcher";
 import "./Navbar.css";
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  is3DMode?: boolean;
+  onToggle3D?: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ is3DMode = false, onToggle3D }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { t } = useLanguage();
@@ -78,6 +83,15 @@ const Navbar: React.FC = () => {
             </a>
             <div className="nav-language-switcher">
               <LanguageSwitcher />
+              {onToggle3D && (
+                <button
+                  className={`nav-toggle-3d-mobile ${is3DMode ? "active" : ""}`}
+                  onClick={onToggle3D}
+                  title={is3DMode ? "Switch to 2D" : "Switch to 3D"}
+                >
+                  {is3DMode ? "🌍" : "🚀"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -85,6 +99,15 @@ const Navbar: React.FC = () => {
             <div className="nav-language-switcher-desktop">
               <LanguageSwitcher />
             </div>
+            {onToggle3D && (
+              <button
+                className={`nav-toggle-3d ${is3DMode ? "active" : ""}`}
+                onClick={onToggle3D}
+                title={is3DMode ? "Switch to 2D" : "Switch to 3D"}
+              >
+                {is3DMode ? "🌍" : "🚀"}
+              </button>
+            )}
             <div
               className={`nav-toggle ${isMobileMenuOpen ? "active" : ""}`}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

@@ -1,0 +1,16 @@
+.city3d-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+.city3d-hint {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+}
+
+
