@@ -44,48 +44,6 @@ const RoadEditorDemo: React.FC = () => {
     height: number;
   } | null>(null);
 
-  const drawCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Apply transformations
-    ctx.save();
-    ctx.translate(pan.x, pan.y);
-    ctx.scale(zoom, zoom);
-
-    // Draw grid
-    drawGrid(ctx, canvas);
-
-    // Draw items
-    items.forEach((item) => {
-      const layer = layers.find((l) => l.id === item.layer);
-      if (layer && layer.visible) {
-        drawItem(ctx, item);
-      }
-    });
-
-    // Draw selection highlight
-    if (selectedItem) {
-      const item = items.find((i) => i.id === selectedItem);
-      if (item) {
-        drawSelectionHighlight(ctx, item);
-      }
-    }
-
-    // Draw drawing preview
-    if (drawingPreview && isDrawing) {
-      drawDrawingPreview(ctx, drawingPreview);
-    }
-
-    ctx.restore();
-  };
-
   const drawGrid = (
     ctx: CanvasRenderingContext2D,
     canvas: HTMLCanvasElement
@@ -291,20 +249,35 @@ const RoadEditorDemo: React.FC = () => {
     ctx.setLineDash([]);
   };
 
-  const getItemAtPoint = (x: number, y: number): string | null => {
+  // Helper function to convert screen coordinates to canvas coordinates
+  const screenToCanvas = (clientX: number, clientY: number): { x: number; y: number } => {
     const canvas = canvasRef.current;
-    if (!canvas) return null;
+    if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    const canvasX = (x - rect.left) * scaleX;
-    const canvasY = (y - rect.top) * scaleY;
+    const canvasX = (clientX - rect.left) * scaleX;
+    const canvasY = (clientY - rect.top) * scaleY;
 
-    // Transform coordinates considering zoom and pan
-    const worldX = (canvasX - pan.x) / zoom;
-    const worldY = (canvasY - pan.y) / zoom;
+    return { x: canvasX, y: canvasY };
+  };
+
+  // Helper function to convert canvas coordinates to world coordinates
+  const canvasToWorld = (canvasX: number, canvasY: number): { x: number; y: number } => {
+    return {
+      x: (canvasX - pan.x) / zoom,
+      y: (canvasY - pan.y) / zoom,
+    };
+  };
+
+  const getItemAtPoint = (clientX: number, clientY: number): string | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+
+    const { x: canvasX, y: canvasY } = screenToCanvas(clientX, clientY);
+    const { x: worldX, y: worldY } = canvasToWorld(canvasX, canvasY);
 
     // Check items in reverse order (top to bottom)
     for (let i = items.length - 1; i >= 0; i--) {
@@ -322,22 +295,17 @@ const RoadEditorDemo: React.FC = () => {
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
     if (selectedTool === "move") {
-      const itemId = getItemAtPoint(x, y);
+      const itemId = getItemAtPoint(e.clientX, e.clientY);
       if (itemId) {
         setDraggedItem(itemId);
         const item = items.find((i) => i.id === itemId);
         if (item) {
+          // Get canvas coordinates for the drag offset calculation
+          const { x: canvasX, y: canvasY } = screenToCanvas(e.clientX, e.clientY);
           setDragOffset({
-            x: x - (item.x * zoom + pan.x),
-            y: y - (item.y * zoom + pan.y),
+            x: canvasX - (item.x * zoom + pan.x),
+            y: canvasY - (item.y * zoom + pan.y),
           });
         }
         setSelectedItem(itemId);
@@ -346,7 +314,7 @@ const RoadEditorDemo: React.FC = () => {
       }
     } else {
       setIsDrawing(true);
-      setStartPos({ x, y });
+      setStartPos({ x: e.clientX, y: e.clientY });
     }
   };
 
@@ -354,20 +322,18 @@ const RoadEditorDemo: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Convert screen coordinates to canvas coordinates
+    const { x: canvasX, y: canvasY } = screenToCanvas(e.clientX, e.clientY);
 
     // Update coordinates display
-    const worldX = (x - pan.x) / zoom;
-    const worldY = (y - pan.y) / zoom;
+    const { x: worldX, y: worldY } = canvasToWorld(canvasX, canvasY);
     setCurrentCoords({ x: worldX, y: worldY });
 
     if (draggedItem) {
       const item = items.find((i) => i.id === draggedItem);
       if (item) {
-        const newX = (x - dragOffset.x - pan.x) / zoom;
-        const newY = (y - dragOffset.y - pan.y) / zoom;
+        const newX = (canvasX - dragOffset.x - pan.x) / zoom;
+        const newY = (canvasY - dragOffset.y - pan.y) / zoom;
 
         setItems((prev) =>
           prev.map((i) =>
@@ -379,10 +345,11 @@ const RoadEditorDemo: React.FC = () => {
 
     // Update drawing preview
     if (isDrawing && selectedTool !== "move") {
-      const worldStartX = (startPos.x - pan.x) / zoom;
-      const worldStartY = (startPos.y - pan.y) / zoom;
-      const worldEndX = (x - pan.x) / zoom;
-      const worldEndY = (y - pan.y) / zoom;
+      const { x: canvasStartX, y: canvasStartY } = screenToCanvas(startPos.x, startPos.y);
+      const worldStartX = (canvasStartX - pan.x) / zoom;
+      const worldStartY = (canvasStartY - pan.y) / zoom;
+      const worldEndX = (canvasX - pan.x) / zoom;
+      const worldEndY = (canvasY - pan.y) / zoom;
 
       const previewX = Math.min(worldStartX, worldEndX);
       const previewY = Math.min(worldStartY, worldEndY);
@@ -403,15 +370,15 @@ const RoadEditorDemo: React.FC = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      // Convert screen coordinates to canvas coordinates
+      const { x: canvasEndX, y: canvasEndY } = screenToCanvas(e.clientX, e.clientY);
+      const { x: canvasStartX, y: canvasStartY } = screenToCanvas(startPos.x, startPos.y);
 
-      // Convert screen coordinates to world coordinates
-      const worldStartX = (startPos.x - pan.x) / zoom;
-      const worldStartY = (startPos.y - pan.y) / zoom;
-      const worldEndX = (x - pan.x) / zoom;
-      const worldEndY = (y - pan.y) / zoom;
+      // Convert canvas coordinates to world coordinates
+      const worldStartX = (canvasStartX - pan.x) / zoom;
+      const worldStartY = (canvasStartY - pan.y) / zoom;
+      const worldEndX = (canvasEndX - pan.x) / zoom;
+      const worldEndY = (canvasEndY - pan.y) / zoom;
 
       // Calculate proper dimensions
       const itemX = Math.min(worldStartX, worldEndX);
@@ -456,15 +423,14 @@ const RoadEditorDemo: React.FC = () => {
     // Zoom towards mouse position
     const canvas = canvasRef.current;
     if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
+      // Convert screen coordinates to canvas coordinates
+      const { x: canvasX, y: canvasY } = screenToCanvas(e.clientX, e.clientY);
 
-      const worldX = (mouseX - pan.x) / zoom;
-      const worldY = (mouseY - pan.y) / zoom;
+      const worldX = (canvasX - pan.x) / zoom;
+      const worldY = (canvasY - pan.y) / zoom;
 
-      const newPanX = mouseX - worldX * newZoom;
-      const newPanY = mouseY - worldY * newZoom;
+      const newPanX = canvasX - worldX * newZoom;
+      const newPanY = canvasY - worldY * newZoom;
 
       setPan({ x: newPanX, y: newPanY });
     }
@@ -473,8 +439,50 @@ const RoadEditorDemo: React.FC = () => {
   };
 
   useEffect(() => {
+    const drawCanvas = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Apply transformations
+      ctx.save();
+      ctx.translate(pan.x, pan.y);
+      ctx.scale(zoom, zoom);
+
+      // Draw grid
+      drawGrid(ctx, canvas);
+
+      // Draw items
+      items.forEach((item) => {
+        const layer = layers.find((l) => l.id === item.layer);
+        if (layer && layer.visible) {
+          drawItem(ctx, item);
+        }
+      });
+
+      // Draw selection highlight
+      if (selectedItem) {
+        const item = items.find((i) => i.id === selectedItem);
+        if (item) {
+          drawSelectionHighlight(ctx, item);
+        }
+      }
+
+      // Draw drawing preview
+      if (drawingPreview && isDrawing) {
+        drawDrawingPreview(ctx, drawingPreview);
+      }
+
+      ctx.restore();
+    };
+    
     drawCanvas();
-  }, [items, zoom, pan, selectedItem, layers]);
+  }, [items, zoom, pan, selectedItem, layers, drawingPreview, isDrawing]);
 
   return (
     <div className="road-editor-demo">
