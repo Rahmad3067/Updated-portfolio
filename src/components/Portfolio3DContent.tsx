@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
+import RoadEditorDemo from "./demos/RoadEditorDemo";
+import RobotInterfaceDemo from "./demos/RobotInterfaceDemo";
+import ROICalculatorDemo from "./demos/ROICalculatorDemo";
+import YcsosDemo from "./demos/YcsosDemo";
 import "./Portfolio3DContent.css";
 
 interface Portfolio3DContentProps {
@@ -13,6 +17,7 @@ const Portfolio3DContent: React.FC<Portfolio3DContentProps> = ({
 }) => {
   const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
+  const [selectedDemo, setSelectedDemo] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedSection) {
@@ -21,6 +26,12 @@ const Portfolio3DContent: React.FC<Portfolio3DContentProps> = ({
       setIsVisible(false);
     }
   }, [selectedSection]);
+
+  useEffect(() => {
+    if (selectedDemo) {
+      console.log("Demo selected:", selectedDemo); // Debug log
+    }
+  }, [selectedDemo]);
 
   const renderContent = () => {
     switch (selectedSection) {
@@ -283,6 +294,27 @@ const Portfolio3DContent: React.FC<Portfolio3DContentProps> = ({
                       <span key={i}>{tech}</span>
                     ))}
                   </div>
+                  <div className="project-actions">
+                    <button
+                      className="btn btn-primary"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedDemo(p.id);
+                        console.log("Demo button clicked:", p.id); // Debug log
+                      }}
+                    >
+                      🎮 Try Demo
+                    </button>
+                  </div>
+                  <div className="demo-notice">
+                    <small>
+                      💡 <strong>Note:</strong> This is a small interactive demo
+                      showcasing the project's core functionality. It does not
+                      represent the complete project with all features.
+                    </small>
+                  </div>
                 </div>
               ))}
             </div>
@@ -380,29 +412,69 @@ const Portfolio3DContent: React.FC<Portfolio3DContentProps> = ({
     }
   };
 
-  if (!selectedSection || !isVisible) return null;
-
   return (
-    <div className={`portfolio-3d-content ${isVisible ? "visible" : "hidden"}`}>
-      <div className="content-overlay" onClick={onClose}></div>
-      <div className="content-modal">
-        <div className="content-header">
-          <h2 className="content-title">
-            {selectedSection === "hero" && "Welcome"}
-            {selectedSection === "about" && t("nav.about")}
-            {selectedSection === "experience" && t("nav.experience")}
-            {selectedSection === "skills" && t("nav.skills")}
-            {selectedSection === "projects" && t("nav.projects")}
-            {selectedSection === "education" && t("nav.education")}
-            {selectedSection === "contact" && t("nav.contact")}
-          </h2>
-          <button className="content-close" onClick={onClose}>
-            ✕
-          </button>
+    <>
+      {selectedSection && isVisible && !selectedDemo && (
+        <div className={`portfolio-3d-content ${isVisible ? "visible" : "hidden"}`}>
+          <div className="content-overlay" onClick={onClose}></div>
+          <div className="content-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="content-header">
+              <h2 className="content-title">
+                {selectedSection === "hero" && "Welcome"}
+                {selectedSection === "about" && t("nav.about")}
+                {selectedSection === "experience" && t("nav.experience")}
+                {selectedSection === "skills" && t("nav.skills")}
+                {selectedSection === "projects" && t("nav.projects")}
+                {selectedSection === "education" && t("nav.education")}
+                {selectedSection === "contact" && t("nav.contact")}
+              </h2>
+              <button className="content-close" onClick={onClose}>
+                ✕
+              </button>
+            </div>
+            <div className="content-body">{renderContent()}</div>
+          </div>
         </div>
-        <div className="content-body">{renderContent()}</div>
-      </div>
-    </div>
+      )}
+
+      {/* Demo Modals */}
+      {selectedDemo && (
+        <div
+          className="demo-modal-overlay"
+          onClick={() => setSelectedDemo(null)}
+        >
+          <div className="demo-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="demo-modal-header">
+              <div className="demo-header-content">
+                <h3>
+                  {selectedDemo === "road-editor" &&
+                    t("projects.roadeditor.title")}
+                  {selectedDemo === "robot-interface" &&
+                    t("projects.robotinterface.title")}
+                  {selectedDemo === "roi-calculator" && t("projects.roi.title")}
+                  {selectedDemo === "ycsos" && t("projects.ycsos.title")}
+                </h3>
+                <div className="demo-subtitle">
+                  🎮 Interactive Demo - Core Functionality Preview
+                </div>
+              </div>
+              <button
+                className="demo-modal-close"
+                onClick={() => setSelectedDemo(null)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="demo-modal-content">
+              {selectedDemo === "road-editor" && <RoadEditorDemo />}
+              {selectedDemo === "robot-interface" && <RobotInterfaceDemo />}
+              {selectedDemo === "roi-calculator" && <ROICalculatorDemo />}
+              {selectedDemo === "ycsos" && <YcsosDemo />}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

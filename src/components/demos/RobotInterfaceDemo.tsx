@@ -9,18 +9,22 @@ interface Robot {
   location: string;
   mission: string;
   speed: number;
+  model: string;
+  lastMaintenance: string;
+  totalTasks: number;
 }
 
-interface StorageZone {
+interface Battery {
   id: string;
-  name: string;
+  robotId: string;
+  robotName: string;
   capacity: number;
-  occupied: number;
-  type: "storage" | "loading" | "unloading";
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  currentCharge: number;
+  status: "charging" | "discharging" | "idle" | "maintenance";
+  health: number;
+  cycles: number;
+  manufacturer: string;
+  installDate: string;
 }
 
 interface WarehouseItem {
@@ -45,8 +49,23 @@ interface Task {
   description: string;
 }
 
+interface Modal {
+  id: string;
+  type: "map" | "robots" | "batteries" | "createTask";
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  minimized: boolean;
+  zIndex: number;
+}
+
 const RobotInterfaceDemo: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [modals, setModals] = useState<Modal[]>([]);
+  const [nextZIndex, setNextZIndex] = useState(1000);
+  const [draggedModal, setDraggedModal] = useState<string | null>(null);
+  const [resizedModal, setResizedModal] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
   const [robots, setRobots] = useState<Robot[]>([
     {
@@ -57,6 +76,9 @@ const RobotInterfaceDemo: React.FC = () => {
       location: "Zone A",
       mission: "Transport to Zone B",
       speed: 2.5,
+      model: "AGV-2000",
+      lastMaintenance: "2024-01-15",
+      totalTasks: 234,
     },
     {
       id: "2",
@@ -66,6 +88,9 @@ const RobotInterfaceDemo: React.FC = () => {
       location: "Charging Station",
       mission: "Charging",
       speed: 0,
+      model: "AGV-2000",
+      lastMaintenance: "2024-01-20",
+      totalTasks: 189,
     },
     {
       id: "3",
@@ -75,6 +100,9 @@ const RobotInterfaceDemo: React.FC = () => {
       location: "Zone C",
       mission: "Loading pallets",
       speed: 1.8,
+      model: "AGV-3000",
+      lastMaintenance: "2024-01-18",
+      totalTasks: 312,
     },
     {
       id: "4",
@@ -84,160 +112,76 @@ const RobotInterfaceDemo: React.FC = () => {
       location: "Maintenance Bay",
       mission: "Maintenance",
       speed: 0,
+      model: "AGV-2000",
+      lastMaintenance: "2024-01-22",
+      totalTasks: 156,
+    },
+  ]);
+
+  const [batteries, setBatteries] = useState<Battery[]>([
+    {
+      id: "b1",
+      robotId: "1",
+      robotName: "Robot-001",
+      capacity: 100,
+      currentCharge: 85,
+      status: "discharging",
+      health: 92,
+      cycles: 450,
+      manufacturer: "LithiumPro",
+      installDate: "2023-06-15",
+    },
+    {
+      id: "b2",
+      robotId: "2",
+      robotName: "Robot-002",
+      capacity: 100,
+      currentCharge: 45,
+      status: "charging",
+      health: 88,
+      cycles: 520,
+      manufacturer: "LithiumPro",
+      installDate: "2023-05-20",
+    },
+    {
+      id: "b3",
+      robotId: "3",
+      robotName: "Robot-003",
+      capacity: 100,
+      currentCharge: 92,
+      status: "discharging",
+      health: 95,
+      cycles: 380,
+      manufacturer: "LithiumPro",
+      installDate: "2023-08-10",
+    },
+    {
+      id: "b4",
+      robotId: "4",
+      robotName: "Robot-004",
+      capacity: 100,
+      currentCharge: 78,
+      status: "idle",
+      health: 85,
+      cycles: 600,
+      manufacturer: "LithiumPro",
+      installDate: "2023-04-05",
     },
   ]);
 
   const [warehouseItems, setWarehouseItems] = useState<WarehouseItem[]>([
-    // Robots
-    {
-      id: "r1",
-      type: "robot",
-      x: 100,
-      y: 100,
-      width: 30,
-      height: 30,
-      name: "Robot-001",
-      status: "active",
-      battery: 85,
-    },
-    {
-      id: "r2",
-      type: "robot",
-      x: 200,
-      y: 200,
-      width: 30,
-      height: 30,
-      name: "Robot-002",
-      status: "charging",
-      battery: 45,
-    },
-    {
-      id: "r3",
-      type: "robot",
-      x: 300,
-      y: 150,
-      width: 30,
-      height: 30,
-      name: "Robot-003",
-      status: "active",
-      battery: 92,
-    },
-    {
-      id: "r4",
-      type: "robot",
-      x: 150,
-      y: 300,
-      width: 30,
-      height: 30,
-      name: "Robot-004",
-      status: "maintenance",
-      battery: 78,
-    },
-
-    // Storage Zones
-    {
-      id: "s1",
-      type: "storage",
-      x: 50,
-      y: 50,
-      width: 80,
-      height: 60,
-      name: "Storage Zone A",
-    },
-    {
-      id: "s2",
-      type: "storage",
-      x: 400,
-      y: 50,
-      width: 80,
-      height: 60,
-      name: "Storage Zone B",
-    },
-    {
-      id: "s3",
-      type: "storage",
-      x: 50,
-      y: 250,
-      width: 80,
-      height: 60,
-      name: "Storage Zone C",
-    },
-    {
-      id: "s4",
-      type: "storage",
-      x: 400,
-      y: 250,
-      width: 80,
-      height: 60,
-      name: "Storage Zone D",
-    },
-
-    // Pallets
-    {
-      id: "p1",
-      type: "pallet",
-      x: 200,
-      y: 80,
-      width: 20,
-      height: 15,
-      name: "Pallet-001",
-    },
-    {
-      id: "p2",
-      type: "pallet",
-      x: 250,
-      y: 80,
-      width: 20,
-      height: 15,
-      name: "Pallet-002",
-    },
-    {
-      id: "p3",
-      type: "pallet",
-      x: 300,
-      y: 80,
-      width: 20,
-      height: 15,
-      name: "Pallet-003",
-    },
-    {
-      id: "p4",
-      type: "pallet",
-      x: 200,
-      y: 300,
-      width: 20,
-      height: 15,
-      name: "Pallet-004",
-    },
-    {
-      id: "p5",
-      type: "pallet",
-      x: 250,
-      y: 300,
-      width: 20,
-      height: 15,
-      name: "Pallet-005",
-    },
-
-    // Chargers
-    {
-      id: "c1",
-      type: "charger",
-      x: 180,
-      y: 180,
-      width: 25,
-      height: 25,
-      name: "Charger-001",
-    },
-    {
-      id: "c2",
-      type: "charger",
-      x: 350,
-      y: 180,
-      width: 25,
-      height: 25,
-      name: "Charger-002",
-    },
+    { id: "r1", type: "robot", x: 100, y: 100, width: 30, height: 30, name: "Robot-001", status: "active", battery: 85 },
+    { id: "r2", type: "robot", x: 200, y: 200, width: 30, height: 30, name: "Robot-002", status: "charging", battery: 45 },
+    { id: "r3", type: "robot", x: 300, y: 150, width: 30, height: 30, name: "Robot-003", status: "active", battery: 92 },
+    { id: "r4", type: "robot", x: 150, y: 300, width: 30, height: 30, name: "Robot-004", status: "maintenance", battery: 78 },
+    { id: "s1", type: "storage", x: 50, y: 50, width: 80, height: 60, name: "Storage Zone A" },
+    { id: "s2", type: "storage", x: 400, y: 50, width: 80, height: 60, name: "Storage Zone B" },
+    { id: "s3", type: "storage", x: 50, y: 250, width: 80, height: 60, name: "Storage Zone C" },
+    { id: "s4", type: "storage", x: 400, y: 250, width: 80, height: 60, name: "Storage Zone D" },
+    { id: "p1", type: "pallet", x: 200, y: 80, width: 20, height: 15, name: "Pallet-001" },
+    { id: "p2", type: "pallet", x: 250, y: 80, width: 20, height: 15, name: "Pallet-002" },
+    { id: "c1", type: "charger", x: 180, y: 180, width: 25, height: 25, name: "Charger-001" },
+    { id: "c2", type: "charger", x: 350, y: 180, width: 25, height: 25, name: "Charger-002" },
   ]);
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -261,56 +205,158 @@ const RobotInterfaceDemo: React.FC = () => {
     };
   }>({});
 
-  const [storageZones, setStorageZones] = useState<StorageZone[]>([
-    {
-      id: "1",
-      name: "Zone A",
-      capacity: 100,
-      occupied: 75,
-      type: "storage",
-      x: 50,
-      y: 50,
-      width: 80,
-      height: 60,
-    },
-    {
-      id: "2",
-      name: "Zone B",
-      capacity: 80,
-      occupied: 60,
-      type: "loading",
-      x: 400,
-      y: 50,
-      width: 80,
-      height: 60,
-    },
-    {
-      id: "3",
-      name: "Zone C",
-      capacity: 120,
-      occupied: 45,
-      type: "unloading",
-      x: 50,
-      y: 250,
-      width: 80,
-      height: 60,
-    },
-    {
-      id: "4",
-      name: "Zone D",
-      capacity: 100,
-      occupied: 30,
-      type: "storage",
-      x: 400,
-      y: 250,
-      width: 80,
-      height: 60,
-    },
-  ]);
+  // Open a modal
+  const openModal = (type: Modal["type"]) => {
+    const existingModal = modals.find((m) => m.type === type);
+    if (existingModal) {
+      // Bring to front
+      setModals((prev) =>
+        prev.map((m) =>
+          m.id === existingModal.id
+            ? { ...m, minimized: false, zIndex: nextZIndex }
+            : m
+        )
+      );
+      setNextZIndex((prev) => prev + 1);
+      return;
+    }
 
-  const [selectedRobot, setSelectedRobot] = useState<string>("1");
-  const [newMission, setNewMission] = useState("");
+    const defaultSizes: Record<Modal["type"], { width: number; height: number }> = {
+      map: { width: 800, height: 600 },
+      robots: { width: 900, height: 600 },
+      batteries: { width: 900, height: 600 },
+      createTask: { width: 500, height: 500 },
+    };
 
+    const defaultPositions: Record<Modal["type"], { x: number; y: number }> = {
+      map: { x: 100, y: 50 },
+      robots: { x: 150, y: 50 },
+      batteries: { x: 200, y: 50 },
+      createTask: { x: 250, y: 50 },
+    };
+
+    const newModal: Modal = {
+      id: `${type}-${Date.now()}`,
+      type,
+      position: defaultPositions[type],
+      size: defaultSizes[type],
+      minimized: false,
+      zIndex: nextZIndex,
+    };
+
+    setModals((prev) => [...prev, newModal]);
+    setNextZIndex((prev) => prev + 1);
+  };
+
+  // Close a modal
+  const closeModal = (modalId: string) => {
+    setModals((prev) => prev.filter((m) => m.id !== modalId));
+  };
+
+  // Toggle minimize
+  const toggleMinimize = (modalId: string) => {
+    setModals((prev) =>
+      prev.map((m) => (m.id === modalId ? { ...m, minimized: !m.minimized } : m))
+    );
+  };
+
+  // Bring modal to front
+  const bringToFront = (modalId: string) => {
+    setModals((prev) =>
+      prev.map((m) =>
+        m.id === modalId ? { ...m, zIndex: nextZIndex } : m
+      )
+    );
+    setNextZIndex((prev) => prev + 1);
+  };
+
+  // Handle modal drag
+  const handleMouseDown = (e: React.MouseEvent, modalId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    bringToFront(modalId);
+    const modal = modals.find((m) => m.id === modalId);
+    if (modal) {
+      setDraggedModal(modalId);
+      setDragOffset({
+        x: e.clientX - modal.position.x,
+        y: e.clientY - modal.position.y,
+      });
+    }
+  };
+
+  // Handle modal resize
+  const handleResizeMouseDown = (e: React.MouseEvent, modalId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    bringToFront(modalId);
+    const modal = modals.find((m) => m.id === modalId);
+    if (modal) {
+      setResizedModal(modalId);
+      setResizeStart({
+        x: e.clientX,
+        y: e.clientY,
+        width: modal.size.width,
+        height: modal.size.height,
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (draggedModal) {
+        setModals((prev) =>
+          prev.map((m) =>
+            m.id === draggedModal
+              ? {
+                  ...m,
+                  position: {
+                    x: e.clientX - dragOffset.x,
+                    y: e.clientY - dragOffset.y,
+                  },
+                }
+              : m
+          )
+        );
+      }
+      if (resizedModal) {
+        const modal = modals.find((m) => m.id === resizedModal);
+        if (modal) {
+          const deltaX = e.clientX - resizeStart.x;
+          const deltaY = e.clientY - resizeStart.y;
+          setModals((prev) =>
+            prev.map((m) =>
+              m.id === resizedModal
+                ? {
+                    ...m,
+                    size: {
+                      width: Math.max(400, resizeStart.width + deltaX),
+                      height: Math.max(300, resizeStart.height + deltaY),
+                    },
+                  }
+                : m
+            )
+          );
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setDraggedModal(null);
+      setResizedModal(null);
+    };
+
+    if (draggedModal || resizedModal) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [draggedModal, resizedModal, dragOffset, resizeStart, modals]);
+
+  // Canvas drawing functions (similar to RoadEditor)
   const drawWarehouseMap = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -318,7 +364,6 @@ const RobotInterfaceDemo: React.FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw grid
@@ -336,47 +381,6 @@ const RobotInterfaceDemo: React.FC = () => {
       ctx.lineTo(canvas.width, i);
       ctx.stroke();
     }
-
-    // Draw movement paths
-    Object.keys(movingRobots).forEach((robotId) => {
-      const movement = movingRobots[robotId];
-      if (movement) {
-        // Draw path line
-        ctx.strokeStyle = "#4CAF50";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([10, 5]);
-        ctx.beginPath();
-        ctx.moveTo(movement.startX + 15, movement.startY + 15);
-        ctx.lineTo(movement.targetX + 15, movement.targetY + 15);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Draw target indicator
-        ctx.fillStyle = "#4CAF50";
-        ctx.beginPath();
-        ctx.arc(
-          movement.targetX + 15,
-          movement.targetY + 15,
-          8,
-          0,
-          2 * Math.PI
-        );
-        ctx.fill();
-
-        // Draw target ring
-        ctx.strokeStyle = "#4CAF50";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(
-          movement.targetX + 15,
-          movement.targetY + 15,
-          12,
-          0,
-          2 * Math.PI
-        );
-        ctx.stroke();
-      }
-    });
 
     // Draw warehouse items
     warehouseItems.forEach((item) => {
@@ -410,51 +414,23 @@ const RobotInterfaceDemo: React.FC = () => {
   ) => {
     const centerX = item.x + item.width / 2;
     const centerY = item.y + item.height / 2;
-    const robotId = item.id.replace("r", "");
+    const bodyColor =
+      item.status === "active"
+        ? "#2196F3"
+        : item.status === "charging"
+        ? "#FF9800"
+        : "#9E9E9E";
 
-    // Check if robot is moving
-    const isMoving = movingRobots[robotId];
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(item.x + 2, item.y + 8, item.width - 4, item.height - 12);
 
-    // Draw forklift robot
-    drawForkliftRobot(ctx, item, isMoving);
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(item.x + 4, item.y + 2, item.width - 8, 8);
 
-    // Add movement indicator (pulsing effect)
-    if (isMoving) {
-      ctx.strokeStyle = "#4CAF50";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, item.width / 2 + 8, 0, 2 * Math.PI);
-      ctx.stroke();
+    ctx.fillStyle = "#666";
+    ctx.fillRect(item.x - 2, item.y + 12, 4, 2);
+    ctx.fillRect(item.x - 2, item.y + 16, 4, 2);
 
-      // Add movement trail
-      ctx.strokeStyle = "#4CAF50";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(item.x - 15, item.y + item.height / 2);
-      ctx.lineTo(item.x + item.width + 15, item.y + item.height / 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Show pallet if robot is carrying one
-      if (isMoving.step === "delivery" && isMoving.palletId) {
-        // Draw pallet on forklift
-        ctx.fillStyle = "#8D6E63";
-        ctx.fillRect(item.x + 8, item.y - 12, 16, 10);
-
-        // Draw pallet slats
-        ctx.strokeStyle = "#5D4037";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(item.x + 8, item.y - 8);
-        ctx.lineTo(item.x + 24, item.y - 8);
-        ctx.moveTo(item.x + 8, item.y - 5);
-        ctx.lineTo(item.x + 24, item.y - 5);
-        ctx.stroke();
-      }
-    }
-
-    // Battery indicator
     if (item.battery !== undefined) {
       ctx.fillStyle =
         item.battery > 70
@@ -467,130 +443,18 @@ const RobotInterfaceDemo: React.FC = () => {
       ctx.fill();
     }
 
-    // Robot name with movement status
     ctx.fillStyle = "#fff";
     ctx.font = "8px Arial";
     ctx.textAlign = "center";
-    let displayName = item.name;
-    if (isMoving) {
-      if (isMoving.step === "pickup") {
-        displayName = `${item.name} (Going to Pallet)`;
-      } else if (isMoving.step === "delivery") {
-        displayName = `${item.name} (Delivering Pallet)`;
-      } else if (isMoving.step === "charging") {
-        displayName = `${item.name} (Going to Charger)`;
-      }
-    }
-    ctx.fillText(displayName, centerX, item.y + item.height + 12);
-  };
-
-  const drawForkliftRobot = (
-    ctx: CanvasRenderingContext2D,
-    item: WarehouseItem,
-    isMoving: any
-  ) => {
-    const centerX = item.x + item.width / 2;
-    const centerY = item.y + item.height / 2;
-
-    // Robot body color based on status
-    const bodyColor =
-      item.status === "active"
-        ? "#2196F3"
-        : item.status === "charging"
-        ? "#FF9800"
-        : "#9E9E9E";
-
-    // Forklift body (main chassis)
-    ctx.fillStyle = bodyColor;
-    ctx.fillRect(item.x + 2, item.y + 8, item.width - 4, item.height - 12);
-
-    // Forklift cabin
-    ctx.fillStyle = bodyColor;
-    ctx.fillRect(item.x + 4, item.y + 2, item.width - 8, 8);
-
-    // Forklift forks (front)
-    ctx.fillStyle = "#666";
-    ctx.fillRect(item.x - 2, item.y + 12, 4, 2);
-    ctx.fillRect(item.x - 2, item.y + 16, 4, 2);
-
-    // Forklift mast (vertical lift mechanism)
-    ctx.fillStyle = "#555";
-    ctx.fillRect(item.x + 6, item.y - 4, 4, item.height + 4);
-    ctx.fillRect(item.x + item.width - 10, item.y - 4, 4, item.height + 4);
-
-    // Forklift wheels
-    ctx.fillStyle = "#333";
-    // Front wheels
-    ctx.beginPath();
-    ctx.arc(item.x + 6, item.y + item.height - 4, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(
-      item.x + item.width - 6,
-      item.y + item.height - 4,
-      3,
-      0,
-      2 * Math.PI
-    );
-    ctx.fill();
-
-    // Rear wheels
-    ctx.beginPath();
-    ctx.arc(item.x + 4, item.y + item.height - 2, 2, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(
-      item.x + item.width - 4,
-      item.y + item.height - 2,
-      2,
-      0,
-      2 * Math.PI
-    );
-    ctx.fill();
-
-    // Forklift operator cabin details
-    ctx.fillStyle = "#000";
-    ctx.fillRect(item.x + 5, item.y + 3, 2, 2); // Window
-    ctx.fillRect(item.x + item.width - 7, item.y + 3, 2, 2); // Window
-
-    // Forklift lights
-    ctx.fillStyle = "#FFD700";
-    ctx.beginPath();
-    ctx.arc(item.x + 3, item.y + 4, 1, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(item.x + item.width - 3, item.y + 4, 1, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Forklift sensors
-    ctx.fillStyle = "#00FF00";
-    ctx.beginPath();
-    ctx.arc(centerX, item.y + 1, 1, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Add movement animation effect
-    if (isMoving) {
-      // Animated wheels
-      ctx.strokeStyle = "#666";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(item.x + 6, item.y + item.height - 4, 3, 0, Math.PI);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(item.x + item.width - 6, item.y + item.height - 4, 3, 0, Math.PI);
-      ctx.stroke();
-    }
+    ctx.fillText(item.name, centerX, item.y + item.height + 12);
   };
 
   const drawStorageZoneOnMap = (
     ctx: CanvasRenderingContext2D,
     item: WarehouseItem
   ) => {
-    // Storage zone background
     ctx.fillStyle = "#4CAF50";
     ctx.fillRect(item.x, item.y, item.width, item.height);
-
-    // Draw rack shelves
     ctx.strokeStyle = "#2E7D32";
     ctx.lineWidth = 2;
     const shelfCount = Math.floor(item.height / 15);
@@ -601,8 +465,6 @@ const RobotInterfaceDemo: React.FC = () => {
       ctx.lineTo(item.x + item.width, shelfY);
       ctx.stroke();
     }
-
-    // Zone name
     ctx.fillStyle = "#fff";
     ctx.font = "10px Arial";
     ctx.textAlign = "center";
@@ -617,11 +479,8 @@ const RobotInterfaceDemo: React.FC = () => {
     ctx: CanvasRenderingContext2D,
     item: WarehouseItem
   ) => {
-    // Pallet base
     ctx.fillStyle = "#8D6E63";
     ctx.fillRect(item.x, item.y, item.width, item.height);
-
-    // Pallet slats
     ctx.strokeStyle = "#5D4037";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -631,8 +490,6 @@ const RobotInterfaceDemo: React.FC = () => {
     ctx.lineTo(item.x + item.width, item.y + 6);
     ctx.moveTo(item.x, item.y + 9);
     ctx.lineTo(item.x + item.width, item.y + 9);
-    ctx.moveTo(item.x, item.y + 12);
-    ctx.lineTo(item.x + item.width, item.y + 12);
     ctx.stroke();
   };
 
@@ -640,166 +497,17 @@ const RobotInterfaceDemo: React.FC = () => {
     ctx: CanvasRenderingContext2D,
     item: WarehouseItem
   ) => {
-    // Charger base
     ctx.fillStyle = "#FF9800";
     ctx.fillRect(item.x, item.y, item.width, item.height);
-
-    // Charger symbol
     ctx.fillStyle = "#fff";
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
     ctx.fillText("⚡", item.x + item.width / 2, item.y + item.height / 2 + 4);
   };
 
-  // Draw warehouse map
   useEffect(() => {
     drawWarehouseMap();
-  }, [warehouseItems, movingRobots]);
-
-  // Robot movement animation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMovingRobots((prev) => {
-        const updated = { ...prev };
-        let hasMovingRobots = false;
-
-        Object.keys(updated).forEach((robotId) => {
-          const movement = updated[robotId];
-          if (movement.progress < 1) {
-            movement.progress += 0.005; // Much slower movement
-            hasMovingRobots = true;
-
-            if (movement.progress >= 1) {
-              // Movement completed
-              movement.progress = 1;
-
-              // Update warehouse items with final position
-              setWarehouseItems((prevItems) =>
-                prevItems.map((item) =>
-                  item.id === `r${robotId}`
-                    ? { ...item, x: movement.targetX, y: movement.targetY }
-                    : item
-                )
-              );
-
-              // Handle different steps
-              if (movement.step === "pickup") {
-                // Robot picked up pallet, now go to storage zone
-                const pallet = warehouseItems.find(
-                  (item) => item.id === movement.palletId
-                );
-                const storageZones = warehouseItems.filter(
-                  (item) => item.type === "storage"
-                );
-                const targetStorage = storageZones[0]; // Go to first available storage zone
-
-                if (targetStorage) {
-                  // Start delivery step
-                  setTimeout(() => {
-                    setMovingRobots((prev) => ({
-                      ...prev,
-                      [robotId]: {
-                        startX: movement.targetX,
-                        startY: movement.targetY,
-                        targetX: targetStorage.x + targetStorage.width / 2 - 15,
-                        targetY:
-                          targetStorage.y + targetStorage.height / 2 - 15,
-                        progress: 0,
-                        step: "delivery",
-                        palletId: movement.palletId,
-                        storageId: targetStorage.id,
-                      },
-                    }));
-                  }, 1000); // Wait 1 second before starting delivery
-                }
-              } else if (movement.step === "delivery") {
-                // Delivery completed
-                setTimeout(() => {
-                  // Complete the task
-                  setTasks((prevTasks) =>
-                    prevTasks.map((task) =>
-                      task.robotId === robotId && task.status === "active"
-                        ? { ...task, status: "completed" }
-                        : task
-                    )
-                  );
-
-                  // Remove from moving robots
-                  setMovingRobots((prev) => {
-                    const newMoving = { ...prev };
-                    delete newMoving[robotId];
-                    return newMoving;
-                  });
-                }, 1000);
-              } else if (movement.step === "charging") {
-                // Charging completed
-                setTimeout(() => {
-                  setTasks((prevTasks) =>
-                    prevTasks.map((task) =>
-                      task.robotId === robotId && task.status === "active"
-                        ? { ...task, status: "completed" }
-                        : task
-                    )
-                  );
-
-                  setMovingRobots((prev) => {
-                    const newMoving = { ...prev };
-                    delete newMoving[robotId];
-                    return newMoving;
-                  });
-                }, 1000);
-              }
-            } else {
-              // Update warehouse items with current position
-              const currentX =
-                movement.startX +
-                (movement.targetX - movement.startX) * movement.progress;
-              const currentY =
-                movement.startY +
-                (movement.targetY - movement.startY) * movement.progress;
-
-              setWarehouseItems((prevItems) =>
-                prevItems.map((item) =>
-                  item.id === `r${robotId}`
-                    ? { ...item, x: currentX, y: currentY }
-                    : item
-                )
-              );
-            }
-          }
-        });
-
-        return hasMovingRobots ? updated : {};
-      });
-    }, 50); // 20 FPS
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRobots((prevRobots) =>
-        prevRobots.map((robot) => {
-          if (robot.status === "active") {
-            const batteryChange = Math.random() * 2 - 1; // -1 to 1
-            const newBattery = Math.max(
-              0,
-              Math.min(100, robot.battery + batteryChange)
-            );
-            return {
-              ...robot,
-              battery: Math.round(newBattery),
-              speed: robot.speed + (Math.random() * 0.4 - 0.2), // Small speed variation
-            };
-          }
-          return robot;
-        })
-      );
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
+  }, [warehouseItems]);
 
   const createTask = () => {
     if (!newTask.robotId || (!newTask.targetId && newTask.type === "transport"))
@@ -817,10 +525,6 @@ const RobotInterfaceDemo: React.FC = () => {
     };
 
     setTasks([...tasks, task]);
-
-    // Start robot movement
-    startRobotMovement(newTask.robotId, newTask.targetId);
-
     setNewTask({
       robotId: "",
       type: "transport",
@@ -828,78 +532,7 @@ const RobotInterfaceDemo: React.FC = () => {
       description: "",
     });
     setShowTaskCreator(false);
-  };
-
-  const startRobotMovement = (robotId: string, targetId: string) => {
-    const robot = warehouseItems.find((item) => item.id === `r${robotId}`);
-    const target = warehouseItems.find((item) => item.id === targetId);
-
-    console.log("Starting robot movement:", {
-      robotId,
-      targetId,
-      robot,
-      target,
-    });
-
-    if (!robot || !target) {
-      console.log("Robot or target not found");
-      return;
-    }
-
-    // For transport tasks, first go to pallet, then to storage zone
-    if (target.type === "pallet") {
-      console.log("Starting pickup movement to pallet");
-      // Step 1: Go to pallet
-      setMovingRobots((prev) => ({
-        ...prev,
-        [robotId]: {
-          startX: robot.x,
-          startY: robot.y,
-          targetX: target.x + target.width / 2 - robot.width / 2,
-          targetY: target.y + target.height / 2 - robot.height / 2,
-          progress: 0,
-          step: "pickup",
-          palletId: targetId,
-        },
-      }));
-    } else if (target.type === "charger") {
-      console.log("Starting charging movement");
-      // For charging tasks, go directly to charger
-      setMovingRobots((prev) => ({
-        ...prev,
-        [robotId]: {
-          startX: robot.x,
-          startY: robot.y,
-          targetX: target.x + target.width / 2 - robot.width / 2,
-          targetY: target.y + target.height / 2 - robot.height / 2,
-          progress: 0,
-          step: "charging",
-        },
-      }));
-    }
-
-    // Update robot status
-    setWarehouseItems((prev) =>
-      prev.map((item) =>
-        item.id === `r${robotId}` ? { ...item, status: "active" } : item
-      )
-    );
-  };
-
-  const getAvailableRobots = () => {
-    return robots.filter(
-      (robot) => robot.status === "active" || robot.status === "idle"
-    );
-  };
-
-  const getAvailableTargets = () => {
-    if (newTask.type === "charge") {
-      return warehouseItems.filter((item) => item.type === "charger");
-    } else {
-      return warehouseItems.filter(
-        (item) => item.type === "pallet" || item.type === "storage"
-      );
-    }
+    closeModal(modals.find((m) => m.type === "createTask")?.id || "");
   };
 
   const getStatusColor = (status: string) => {
@@ -923,315 +556,217 @@ const RobotInterfaceDemo: React.FC = () => {
     return "#F44336";
   };
 
-  const assignMission = () => {
-    if (!newMission.trim()) return;
-
-    setRobots((prevRobots) =>
-      prevRobots.map((robot) =>
-        robot.id === selectedRobot
-          ? { ...robot, mission: newMission, status: "active" as const }
-          : robot
-      )
-    );
-    setNewMission("");
-  };
-
-  const getTotalCapacity = () => {
-    return storageZones.reduce((total, zone) => total + zone.capacity, 0);
-  };
-
-  const getTotalOccupied = () => {
-    return storageZones.reduce((total, zone) => total + zone.occupied, 0);
-  };
-
-  return (
-    <div className="robot-interface-demo">
-      <div className="demo-header">
-        <h3>Robot Interface Manager</h3>
-        <p>
-          Monitor robot status, battery levels, and manage warehouse operations
-          in real-time.
-        </p>
-      </div>
-
-      <div className="demo-dashboard">
-        <div className="dashboard-stats">
-          <div className="stat-card">
-            <div className="stat-icon">🤖</div>
-            <div className="stat-content">
-              <div className="stat-value">{robots.length}</div>
-              <div className="stat-label">Total Robots</div>
-            </div>
+  // Render modal content
+  const renderModalContent = (modal: Modal) => {
+    switch (modal.type) {
+      case "map":
+        return (
+          <div className="map-modal-content">
+            <canvas
+              ref={canvasRef}
+              width={600}
+              height={400}
+              className="map-canvas"
+            />
           </div>
-          <div className="stat-card">
-            <div className="stat-icon">⚡</div>
-            <div className="stat-content">
-              <div className="stat-value">
-                {Math.round(
-                  robots.reduce((sum, r) => sum + r.battery, 0) / robots.length
-                )}
-                %
-              </div>
-              <div className="stat-label">Avg Battery</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">📦</div>
-            <div className="stat-content">
-              <div className="stat-value">
-                {getTotalOccupied()}/{getTotalCapacity()}
-              </div>
-              <div className="stat-label">Storage Usage</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">🏃</div>
-            <div className="stat-content">
-              <div className="stat-value">
-                {robots.filter((r) => r.status === "active").length}
-              </div>
-              <div className="stat-label">Active Robots</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="demo-content">
-          <div className="warehouse-map-section">
-            <div className="map-header">
-              <h4>Warehouse Map</h4>
-              <button
-                className="create-task-btn"
-                onClick={() => setShowTaskCreator(true)}
-              >
-                + Create Task
-              </button>
-            </div>
-            <div className="warehouse-canvas-container">
-              <canvas
-                ref={canvasRef}
-                width={600}
-                height={400}
-                className="warehouse-canvas"
-              />
-            </div>
-          </div>
-
-          <div className="robots-section">
-            <h4>Robot Status</h4>
-            <div className="robots-grid">
-              {robots.map((robot) => (
-                <div
-                  key={robot.id}
-                  className={`robot-card ${
-                    selectedRobot === robot.id ? "selected" : ""
-                  }`}
-                  onClick={() => setSelectedRobot(robot.id)}
-                >
-                  <div className="robot-header">
-                    <div className="robot-name">{robot.name}</div>
-                    <div
-                      className="robot-status"
-                      style={{ color: getStatusColor(robot.status) }}
-                    >
-                      {robot.status.toUpperCase()}
-                    </div>
-                  </div>
-                  <div className="robot-details">
-                    <div className="detail-item">
-                      <span className="detail-label">Battery:</span>
-                      <div className="battery-bar">
+        );
+      case "robots":
+        return (
+          <div className="table-modal-content">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Battery</th>
+                  <th>Location</th>
+                  <th>Mission</th>
+                  <th>Speed</th>
+                  <th>Model</th>
+                  <th>Tasks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {robots.map((robot) => (
+                  <tr key={robot.id}>
+                    <td>{robot.id}</td>
+                    <td>{robot.name}</td>
+                    <td>
+                      <span
+                        className="status-badge"
+                        style={{ color: getStatusColor(robot.status) }}
+                      >
+                        {robot.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="battery-cell">
                         <div
                           className="battery-fill"
                           style={{
                             width: `${robot.battery}%`,
                             backgroundColor: getBatteryColor(robot.battery),
                           }}
-                        ></div>
-                        <span className="battery-text">{robot.battery}%</span>
+                        />
+                        <span>{robot.battery}%</span>
                       </div>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Location:</span>
-                      <span className="detail-value">{robot.location}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Speed:</span>
-                      <span className="detail-value">
-                        {robot.speed.toFixed(1)} m/s
+                    </td>
+                    <td>{robot.location}</td>
+                    <td>{robot.mission}</td>
+                    <td>{robot.speed.toFixed(1)} m/s</td>
+                    <td>{robot.model}</td>
+                    <td>{robot.totalTasks}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      case "batteries":
+        return (
+          <div className="table-modal-content">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Robot</th>
+                  <th>Charge</th>
+                  <th>Status</th>
+                  <th>Health</th>
+                  <th>Cycles</th>
+                  <th>Manufacturer</th>
+                  <th>Install Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {batteries.map((battery) => (
+                  <tr key={battery.id}>
+                    <td>{battery.id}</td>
+                    <td>{battery.robotName}</td>
+                    <td>
+                      <div className="battery-cell">
+                        <div
+                          className="battery-fill"
+                          style={{
+                            width: `${battery.currentCharge}%`,
+                            backgroundColor: getBatteryColor(
+                              battery.currentCharge
+                            ),
+                          }}
+                        />
+                        <span>{battery.currentCharge}%</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        className="status-badge"
+                        style={{ color: getStatusColor(battery.status) }}
+                      >
+                        {battery.status}
                       </span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Mission:</span>
-                      <span className="detail-value">{robot.mission}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </td>
+                    <td>{battery.health}%</td>
+                    <td>{battery.cycles}</td>
+                    <td>{battery.manufacturer}</td>
+                    <td>{battery.installDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          <div className="tasks-section">
-            <h4>Active Tasks</h4>
-            <div className="tasks-grid">
-              {tasks.map((task) => (
-                <div key={task.id} className="task-card">
-                  <div className="task-header">
-                    <div className="task-type">{task.type.toUpperCase()}</div>
-                    <div
-                      className="task-status"
-                      style={{ color: getStatusColor(task.status) }}
-                    >
-                      {task.status.toUpperCase()}
-                    </div>
-                  </div>
-                  <div className="task-details">
-                    <div className="task-robot">Robot: {task.robotId}</div>
-                    <div className="task-description">{task.description}</div>
-                    <div className="task-time">
-                      Created: {new Date(task.startTime).toLocaleTimeString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mission-control">
-          <h4>Mission Control</h4>
-          <div className="mission-form">
+        );
+      case "createTask":
+        return (
+          <div className="task-creator-content">
             <div className="form-group">
-              <label>
-                Selected Robot:{" "}
-                {robots.find((r) => r.id === selectedRobot)?.name}
-              </label>
-            </div>
-            <div className="form-group">
-              <input
-                type="text"
-                value={newMission}
-                onChange={(e) => setNewMission(e.target.value)}
-                placeholder="Enter new mission..."
-                className="mission-input"
-              />
-            </div>
-            <button onClick={assignMission} className="assign-btn">
-              Assign Mission
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Task Creator Modal */}
-      {showTaskCreator && (
-        <div className="task-creator-modal">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Create New Task</h3>
-              <button
-                className="close-btn"
-                onClick={() => setShowTaskCreator(false)}
+              <label>Select Robot:</label>
+              <select
+                value={newTask.robotId}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, robotId: e.target.value })
+                }
               >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Select Robot:</label>
-                <select
-                  value={newTask.robotId}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, robotId: e.target.value })
-                  }
-                >
-                  <option value="">Choose a robot...</option>
-                  {getAvailableRobots().map((robot) => (
+                <option value="">Choose a robot...</option>
+                {robots
+                  .filter(
+                    (r) => r.status === "active" || r.status === "idle"
+                  )
+                  .map((robot) => (
                     <option key={robot.id} value={robot.id}>
                       {robot.name} (Battery: {robot.battery}%)
                     </option>
                   ))}
-                </select>
-              </div>
-
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Task Type:</label>
+              <select
+                value={newTask.type}
+                onChange={(e) =>
+                  setNewTask({
+                    ...newTask,
+                    type: e.target.value as "charge" | "transport",
+                  })
+                }
+              >
+                <option value="transport">Transport Pallet</option>
+                <option value="charge">Go to Charger</option>
+              </select>
+            </div>
+            {newTask.type === "transport" && (
               <div className="form-group">
-                <label>Task Type:</label>
+                <label>Select Pallet:</label>
                 <select
-                  value={newTask.type}
+                  value={newTask.targetId}
                   onChange={(e) =>
-                    setNewTask({
-                      ...newTask,
-                      type: e.target.value as "charge" | "transport",
-                    })
+                    setNewTask({ ...newTask, targetId: e.target.value })
                   }
                 >
-                  <option value="transport">Transport Pallet</option>
-                  <option value="charge">Go to Charger</option>
+                  <option value="">Choose a pallet...</option>
+                  {warehouseItems
+                    .filter((item) => item.type === "pallet")
+                    .map((pallet) => (
+                      <option key={pallet.id} value={pallet.id}>
+                        {pallet.name}
+                      </option>
+                    ))}
                 </select>
               </div>
-
-              {newTask.type === "transport" && (
-                <div className="form-group">
-                  <label>Select Pallet to Transport:</label>
-                  <select
-                    value={newTask.targetId}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, targetId: e.target.value })
-                    }
-                  >
-                    <option value="">Choose a pallet...</option>
-                    {warehouseItems
-                      .filter((item) => item.type === "pallet")
-                      .map((pallet) => (
-                        <option key={pallet.id} value={pallet.id}>
-                          {pallet.name}
-                        </option>
-                      ))}
-                  </select>
-                  <small style={{ color: "#888", fontSize: "0.8rem" }}>
-                    Robot will pick up this pallet and deliver it to a storage
-                    zone
-                  </small>
-                </div>
-              )}
-
-              {newTask.type === "charge" && (
-                <div className="form-group">
-                  <label>Select Charger:</label>
-                  <select
-                    value={newTask.targetId}
-                    onChange={(e) =>
-                      setNewTask({ ...newTask, targetId: e.target.value })
-                    }
-                  >
-                    <option value="">Choose a charger...</option>
-                    {warehouseItems
-                      .filter((item) => item.type === "charger")
-                      .map((charger) => (
-                        <option key={charger.id} value={charger.id}>
-                          {charger.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              )}
-
+            )}
+            {newTask.type === "charge" && (
               <div className="form-group">
-                <label>Task Description (Optional):</label>
-                <input
-                  type="text"
-                  value={newTask.description}
+                <label>Select Charger:</label>
+                <select
+                  value={newTask.targetId}
                   onChange={(e) =>
-                    setNewTask({ ...newTask, description: e.target.value })
+                    setNewTask({ ...newTask, targetId: e.target.value })
                   }
-                  placeholder="Enter task description..."
-                />
+                >
+                  <option value="">Choose a charger...</option>
+                  {warehouseItems
+                    .filter((item) => item.type === "charger")
+                    .map((charger) => (
+                      <option key={charger.id} value={charger.id}>
+                        {charger.name}
+                      </option>
+                    ))}
+                </select>
               </div>
+            )}
+            <div className="form-group">
+              <label>Description:</label>
+              <input
+                type="text"
+                value={newTask.description}
+                onChange={(e) =>
+                  setNewTask({ ...newTask, description: e.target.value })
+                }
+                placeholder="Enter task description..."
+              />
             </div>
-            <div className="modal-footer">
-              <button
-                className="cancel-btn"
-                onClick={() => setShowTaskCreator(false)}
-              >
+            <div className="task-creator-footer">
+              <button className="cancel-btn" onClick={() => closeModal(modal.id)}>
                 Cancel
               </button>
               <button
@@ -1243,8 +778,136 @@ const RobotInterfaceDemo: React.FC = () => {
               </button>
             </div>
           </div>
+        );
+    }
+  };
+
+  return (
+    <div className="robot-interface-demo">
+      <div className="demo-sidebar">
+        <div className="sidebar-header">
+          <h3>Robot Interface</h3>
         </div>
-      )}
+        <nav className="sidebar-nav">
+          <button
+            className="nav-item"
+            onClick={() => openModal("createTask")}
+          >
+            <span className="nav-icon">➕</span>
+            <span className="nav-label">Create Task</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => openModal("map")}
+          >
+            <span className="nav-icon">🗺️</span>
+            <span className="nav-label">Map</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => openModal("robots")}
+          >
+            <span className="nav-icon">🤖</span>
+            <span className="nav-label">Robots</span>
+          </button>
+          <button
+            className="nav-item"
+            onClick={() => openModal("batteries")}
+          >
+            <span className="nav-icon">🔋</span>
+            <span className="nav-label">Batteries</span>
+          </button>
+        </nav>
+      </div>
+
+      <div className="demo-main-content">
+        <div className="main-content-header">
+          <h2>Robot Interface Manager</h2>
+          <p>Manage your robots, tasks, and warehouse operations</p>
+        </div>
+        <div className="main-content-body">
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">🤖</div>
+              <div className="stat-value">{robots.length}</div>
+              <div className="stat-label">Total Robots</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">⚡</div>
+              <div className="stat-value">
+                {Math.round(
+                  robots.reduce((sum, r) => sum + r.battery, 0) / robots.length
+                )}
+                %
+              </div>
+              <div className="stat-label">Avg Battery</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">✅</div>
+              <div className="stat-value">{tasks.length}</div>
+              <div className="stat-label">Active Tasks</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">🏃</div>
+              <div className="stat-value">
+                {robots.filter((r) => r.status === "active").length}
+              </div>
+              <div className="stat-label">Active Robots</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modals */}
+      {modals.map((modal) => (
+        <div
+          key={modal.id}
+          className={`demo-modal ${modal.minimized ? "minimized" : ""}`}
+          style={{
+            left: `${modal.position.x}px`,
+            top: `${modal.position.y}px`,
+            width: modal.minimized ? "250px" : `${modal.size.width}px`,
+            height: modal.minimized ? "40px" : `${modal.size.height}px`,
+            zIndex: modal.zIndex,
+          }}
+          onMouseDown={() => bringToFront(modal.id)}
+        >
+          <div
+            className="modal-header"
+            onMouseDown={(e) => handleMouseDown(e, modal.id)}
+          >
+            <div className="modal-title">
+              {modal.type === "map" && "🗺️ Map"}
+              {modal.type === "robots" && "🤖 Robots"}
+              {modal.type === "batteries" && "🔋 Batteries"}
+              {modal.type === "createTask" && "➕ Create Task"}
+            </div>
+            <div className="modal-actions">
+              <button
+                className="modal-btn"
+                onClick={() => toggleMinimize(modal.id)}
+              >
+                {modal.minimized ? "□" : "—"}
+              </button>
+              <button
+                className="modal-btn"
+                onClick={() => closeModal(modal.id)}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          {!modal.minimized && (
+            <>
+              <div className="modal-body">{renderModalContent(modal)}</div>
+              <div
+                className="modal-resize-handle"
+                onMouseDown={(e) => handleResizeMouseDown(e, modal.id)}
+              />
+            </>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
