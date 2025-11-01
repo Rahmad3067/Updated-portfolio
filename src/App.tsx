@@ -13,6 +13,7 @@ import Portfolio3DSimple from "./components/Portfolio3DSimple";
 import City3D from "./components/City3D";
 import Projects from "./components/Projects";
 import Skills from "./components/Skills";
+import Chatbot from "./components/Chatbot";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { CarControlsProvider } from "./contexts/CarControlsContext";
 
@@ -102,6 +103,7 @@ function App() {
               <Footer />
             </>
           )}
+          <Chatbot />
         </div>
         </Router>
       </CarControlsProvider>
