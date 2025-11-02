@@ -1,0 +1,197 @@
+.portfolio-3d-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: white;
+}
+
+.loader-container {
+  text-align: center;
+  position: relative;
+}
+
+.loader-spaceship {
+  position: relative;
+  margin: 0 auto 2rem;
+  width: 80px;
+  height: 60px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.spaceship-body {
+  width: 60px;
+  height: 30px;
+  background: linear-gradient(45deg, #4f46e5, #10b981);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: absolute;
+  top: 15px;
+  left: 10px;
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.5);
+}
+
+.spaceship-wing {
+  width: 20px;
+  height: 15px;
+  background: linear-gradient(45deg, #8b5cf6, #ec4899);
+  border-radius: 50%;
+  position: absolute;
+  top: 20px;
+}
+
+.spaceship-wing.left {
+  left: 0;
+  transform: rotate(-20deg);
+}
+
+.spaceship-wing.right {
+  right: 0;
+  transform: rotate(20deg);
+}
+
+.spaceship-engine {
+  width: 8px;
+  height: 20px;
+  background: linear-gradient(to bottom, #f59e0b, #ef4444);
+  border-radius: 4px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: engineGlow 1s ease-in-out infinite alternate;
+}
+
+.loader-text h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(45deg, #4f46e5, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.loader-text p {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.loader-stars {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 100px;
+}
+
+.star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s ease-in-out infinite;
+}
+
+.star:nth-child(1) {
+  top: 20px;
+  left: 20px;
+  animation-delay: 0s;
+}
+
+.star:nth-child(2) {
+  top: 40px;
+  right: 30px;
+  animation-delay: 0.5s;
+}
+
+.star:nth-child(3) {
+  top: 60px;
+  left: 50px;
+  animation-delay: 1s;
+}
+
+.star:nth-child(4) {
+  top: 30px;
+  right: 50px;
+  animation-delay: 1.5s;
+}
+
+.star:nth-child(5) {
+  top: 70px;
+  left: 80px;
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes engineGlow {
+  0% {
+    box-shadow: 0 0 5px #f59e0b;
+  }
+  100% {
+    box-shadow: 0 0 15px #f59e0b, 0 0 25px #ef4444;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .loader-spaceship {
+    width: 60px;
+    height: 45px;
+  }
+
+  .spaceship-body {
+    width: 45px;
+    height: 22px;
+    top: 12px;
+    left: 7px;
+  }
+
+  .spaceship-wing {
+    width: 15px;
+    height: 12px;
+    top: 15px;
+  }
+
+  .spaceship-engine {
+    width: 6px;
+    height: 15px;
+  }
+
+  .loader-text h3 {
+    font-size: 1.2rem;
+  }
+
+  .loader-text p {
+    font-size: 0.9rem;
+  }
+}
+

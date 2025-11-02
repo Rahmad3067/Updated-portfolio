@@ -1,0 +1,115 @@
+import { Task } from "./types";
+
+export const sampleTasks: Task[] = [
+  {
+    id: "1",
+    title: "Implement Product Catalog UI",
+    description:
+      "Create responsive product listing page with filters, search, and pagination",
+    category: "frontend",
+    priority: "high",
+    status: "in-progress",
+    dueDate: "2024-01-15",
+    assignee: "Team Frontend",
+    tags: ["React", "TypeScript", "Redux"],
+    comments: [
+      {
+        id: "1",
+        author: "Frontend Team",
+        text: "Using Redux Toolkit for state management",
+        timestamp: "2024-01-10T10:00:00Z",
+      },
+    ],
+    createdAt: "2024-01-05T09:00:00Z",
+    updatedAt: "2024-01-10T10:00:00Z",
+  },
+  {
+    id: "2",
+    title: "Design RESTful API Endpoints",
+    description:
+      "Create API endpoints for product management with authentication and rate limiting",
+    category: "backend",
+    priority: "high",
+    status: "in-progress",
+    dueDate: "2024-01-18",
+    assignee: "Backend Team",
+    tags: ["Node.js", "Express", "JWT"],
+    comments: [],
+    createdAt: "2024-01-06T09:00:00Z",
+    updatedAt: "2024-01-06T09:00:00Z",
+  },
+  {
+    id: "3",
+    title: "Setup PostgreSQL Database",
+    description:
+      "Design database schema with proper relationships and indexes",
+    category: "database",
+    priority: "urgent",
+    status: "done",
+    dueDate: "2024-01-08",
+    assignee: "DBA Team",
+    tags: ["PostgreSQL", "Migrations", "Indexes"],
+    comments: [
+      {
+        id: "2",
+        author: "DBA Team",
+        text: "Database setup completed successfully",
+        timestamp: "2024-01-08T15:30:00Z",
+      },
+    ],
+    createdAt: "2024-01-04T09:00:00Z",
+    updatedAt: "2024-01-08T15:30:00Z",
+  },
+  {
+    id: "4",
+    title: "Configure CI/CD Pipeline",
+    description: "Setup GitHub Actions for automated testing and deployment",
+    category: "devops",
+    priority: "medium",
+    status: "todo",
+    dueDate: "2024-01-20",
+    assignee: "DevOps Team",
+    tags: ["GitHub Actions", "Docker", "AWS"],
+    comments: [],
+    createdAt: "2024-01-07T09:00:00Z",
+    updatedAt: "2024-01-07T09:00:00Z",
+  },
+  {
+    id: "5",
+    title: "Write Unit Tests",
+    description:
+      "Implement comprehensive unit tests for all React components and API endpoints",
+    category: "testing",
+    priority: "medium",
+    status: "in-review",
+    dueDate: "2024-01-22",
+    assignee: "QA Team",
+    tags: ["Jest", "React Testing Library", "Supertest"],
+    comments: [
+      {
+        id: "3",
+        author: "QA Lead",
+        text: "Coverage currently at 75%, target is 90%",
+        timestamp: "2024-01-09T14:00:00Z",
+      },
+    ],
+    createdAt: "2024-01-08T09:00:00Z",
+    updatedAt: "2024-01-09T14:00:00Z",
+  },
+  {
+    id: "6",
+    title: "Implement Shopping Cart with Redux",
+    description:
+      "Build cart functionality with persistent state using Redux Toolkit",
+    category: "frontend",
+    priority: "urgent",
+    status: "todo",
+    dueDate: "2024-01-12",
+    assignee: "Frontend Team",
+    tags: ["Redux Toolkit", "LocalStorage", "State Management"],
+    comments: [],
+    createdAt: "2024-01-09T09:00:00Z",
+    updatedAt: "2024-01-09T09:00:00Z",
+  },
+];
+

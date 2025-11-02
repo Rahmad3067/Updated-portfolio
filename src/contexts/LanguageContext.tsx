@@ -165,6 +165,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         "projects.ycsos.title": "Ycsos",
         "projects.ycsos.description":
           "Une application conçue pour que le client l'utilise dans son travail pour collecter des informations et effectuer des calculs et estimations pour ses projets.",
+        "projects.taskmanager.title": "E-Commerce Task Manager",
+        "projects.taskmanager.description":
+          "Un gestionnaire de tâches complet pour projets e-commerce avec gestion d'état Redux Toolkit, interface Kanban/liste, recherche, filtres et statistiques. Démonstration de compétences full-stack avec React, Redux Toolkit, Node.js et PostgreSQL.",
+        "projects.workprojects.title": "Projets Professionnels",
+        "projects.workprojects.subtitle": "Applications développées dans le cadre de mes missions professionnelles chez Balyo",
+        "projects.personalprojects.title": "Projets Personnels",
+        "projects.personalprojects.subtitle": "Applications développées pour explorer de nouvelles technologies et améliorer mes compétences",
         "projects.status.completed": "Terminé",
         "projects.status.inprogress": "En cours",
         "projects.status.planned": "Prévu",
@@ -329,6 +336,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         "projects.ycsos.title": "Ycsos",
         "projects.ycsos.description":
           "An application designed for the client to use in their work to collect information and perform calculations and estimations for their projects.",
+        "projects.taskmanager.title": "E-Commerce Task Manager",
+        "projects.taskmanager.description":
+          "A complete task management system for e-commerce projects featuring Redux Toolkit state management, Kanban/list views, search, filters, and statistics. Demonstrates full-stack expertise with React, Redux Toolkit, Node.js, and PostgreSQL.",
+        "projects.workprojects.title": "Professional Projects",
+        "projects.workprojects.subtitle": "Applications developed as part of my professional missions at Balyo",
+        "projects.personalprojects.title": "Personal Projects",
+        "projects.personalprojects.subtitle": "Applications developed to explore new technologies and improve my skills",
         "projects.status.completed": "Completed",
         "projects.status.inprogress": "In Progress",
         "projects.status.planned": "Planned",
