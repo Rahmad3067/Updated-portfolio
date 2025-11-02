@@ -36,6 +36,13 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ t, onDemoClick }) => 
       technologies: ["Python", "Django", "Tailwind"],
       status: t("projects.status.completed"),
     },
+    {
+      id: "ecommerce-task-manager",
+      title: t("projects.taskmanager.title"),
+      description: t("projects.taskmanager.description"),
+      technologies: ["React", "TypeScript", "Redux Toolkit", "Node.js", "PostgreSQL"],
+      status: t("projects.status.completed"),
+    },
   ];
 
   return (

@@ -1,5 +1,6 @@
 import React from "react";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import ECommerceTaskManagerDemo from "../../demos/ECommerceTaskManagerDemo";
 import ROICalculatorDemo from "../../demos/ROICalculatorDemo";
 import RoadEditorDemo from "../../demos/RoadEditorDemo";
 import RobotInterfaceDemo from "../../demos/RobotInterfaceDemo";
@@ -23,6 +24,8 @@ const DemosModalContent: React.FC<DemosModalContentProps> = ({ selectedDemo, onC
         return <ROICalculatorDemo />;
       case "ycsos":
         return <YcsosDemo />;
+      case "ecommerce-task-manager":
+        return <ECommerceTaskManagerDemo />;
       default:
         return null;
     }
@@ -34,6 +37,7 @@ const DemosModalContent: React.FC<DemosModalContentProps> = ({ selectedDemo, onC
       "robot-interface": t("projects.robotinterface.title"),
       "roi-calculator": t("projects.roi.title"),
       ycsos: t("projects.ycsos.title"),
+      "ecommerce-task-manager": t("projects.taskmanager.title"),
     };
     return titles[demoId || ""] || "";
   };
