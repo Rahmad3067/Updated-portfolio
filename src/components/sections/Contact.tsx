@@ -1,5 +1,5 @@
 import emailjs from "@emailjs/browser";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { EMAILJS_CONFIG } from "../../config/emailjs";
 import { useLanguage } from "../../contexts/LanguageContext";
 import "./Contact.css";
@@ -12,17 +12,24 @@ const Contact: React.FC = () => {
     "idle" | "success" | "error"
   >("idle");
 
+  // Initialize EmailJS
+  useEffect(() => {
+    emailjs.init({
+      publicKey: EMAILJS_CONFIG.PUBLIC_KEY,
+    });
+  }, []);
+
   const sendEmail = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus("idle");
 
     // EmailJS configuration
-    const { SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } = EMAILJS_CONFIG;
+    const { SERVICE_ID, TEMPLATE_ID } = EMAILJS_CONFIG;
 
     if (form.current) {
       emailjs
-        .sendForm(SERVICE_ID, TEMPLATE_ID, form.current, PUBLIC_KEY)
+        .sendForm(SERVICE_ID, TEMPLATE_ID, form.current)
         .then(
           (result: any) => {
             console.log("Email sent successfully:", result.text);
