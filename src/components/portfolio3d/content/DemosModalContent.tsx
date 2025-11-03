@@ -1,6 +1,7 @@
 import React from "react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import ECommerceTaskManagerDemo from "../../demos/ECommerceTaskManagerDemo";
+import FocusFlowDemo from "../../demos/FocusFlowDemo";
 import ROICalculatorDemo from "../../demos/ROICalculatorDemo";
 import RoadEditorDemo from "../../demos/RoadEditorDemo";
 import RobotInterfaceDemo from "../../demos/RobotInterfaceDemo";
@@ -24,6 +25,8 @@ const DemosModalContent: React.FC<DemosModalContentProps> = ({ selectedDemo, onC
         return <ROICalculatorDemo />;
       case "ycsos":
         return <YcsosDemo />;
+      case "focusflow":
+        return <FocusFlowDemo />;
       case "ecommerce-task-manager":
         return <ECommerceTaskManagerDemo />;
       default:
@@ -37,6 +40,7 @@ const DemosModalContent: React.FC<DemosModalContentProps> = ({ selectedDemo, onC
       "robot-interface": t("projects.robotinterface.title"),
       "roi-calculator": t("projects.roi.title"),
       ycsos: t("projects.ycsos.title"),
+      focusflow: t("projects.focusflow.title"),
       "ecommerce-task-manager": t("projects.taskmanager.title"),
     };
     return titles[demoId || ""] || "";

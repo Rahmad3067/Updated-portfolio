@@ -37,6 +37,13 @@ const ProjectsSection: React.FC<ProjectsSectionProps> = ({ t, onDemoClick }) => 
       status: t("projects.status.completed"),
     },
     {
+      id: "focusflow",
+      title: t("projects.focusflow.title"),
+      description: t("projects.focusflow.description"),
+      technologies: ["React", "TypeScript", "OpenAI API", "Node.js", "Chart.js"],
+      status: t("projects.status.completed"),
+    },
+    {
       id: "ecommerce-task-manager",
       title: t("projects.taskmanager.title"),
       description: t("projects.taskmanager.description"),

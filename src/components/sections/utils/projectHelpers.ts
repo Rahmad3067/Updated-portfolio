@@ -41,6 +41,7 @@ export const handleViewCode = (projectId: string) => {
     "roi-calculator": null, // Repository not available yet
     ycsos: null, // Repository not available yet
     "ecommerce-task-manager": null, // Repository not available yet
+    focusflow: null, // Repository not available yet
   };
 
   const url = projectUrls[projectId];
@@ -56,6 +57,7 @@ export const handleViewCode = (projectId: string) => {
       "roi-calculator": "ROI Calculator",
       ycsos: "Ycsos",
       "ecommerce-task-manager": "E-Commerce Task Manager",
+      focusflow: "FocusFlow AI Productivity App",
     };
 
     const projectName = projectNames[projectId] || projectId;

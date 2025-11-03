@@ -165,6 +165,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         "projects.ycsos.title": "Ycsos",
         "projects.ycsos.description":
           "Une application conçue pour que le client l'utilise dans son travail pour collecter des informations et effectuer des calculs et estimations pour ses projets.",
+        "projects.focusflow.title": "FocusFlow - AI Productivity App",
+        "projects.focusflow.description":
+          "Application de productivité alimentée par l'IA avec planification quotidienne intelligente, suggestions automatiques, suivi du temps de concentration et résumés quotidiens. Démonstration de l'intégration d'API OpenAI, de la gestion d'état React et de visualisations de données.",
         "projects.taskmanager.title": "E-Commerce Task Manager",
         "projects.taskmanager.description":
           "Un gestionnaire de tâches complet pour projets e-commerce avec gestion d'état Redux Toolkit, interface Kanban/liste, recherche, filtres et statistiques. Démonstration de compétences full-stack avec React, Redux Toolkit, Node.js et PostgreSQL.",
@@ -336,6 +339,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         "projects.ycsos.title": "Ycsos",
         "projects.ycsos.description":
           "An application designed for the client to use in their work to collect information and perform calculations and estimations for their projects.",
+        "projects.focusflow.title": "FocusFlow - AI Productivity App",
+        "projects.focusflow.description":
+          "AI-powered productivity application featuring smart daily planning, automatic suggestions, focus time tracking, and daily summaries. Demonstrates OpenAI API integration, React state management, and data visualizations.",
         "projects.taskmanager.title": "E-Commerce Task Manager",
         "projects.taskmanager.description":
           "A complete task management system for e-commerce projects featuring Redux Toolkit state management, Kanban/list views, search, filters, and statistics. Demonstrates full-stack expertise with React, Redux Toolkit, Node.js, and PostgreSQL.",

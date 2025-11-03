@@ -46,6 +46,13 @@ const Projects: React.FC = () => {
   // Personal Projects
   const personalProjects: Project[] = [
     {
+      id: "focusflow",
+      title: t("projects.focusflow.title"),
+      description: t("projects.focusflow.description"),
+      technologies: ["React", "TypeScript", "OpenAI API", "Node.js", "Chart.js"],
+      status: "completed",
+    },
+    {
       id: "ecommerce-task-manager",
       title: t("projects.taskmanager.title"),
       description: t("projects.taskmanager.description"),

@@ -58,6 +58,7 @@ Un portfolio professionnel moderne développé avec React et TypeScript, présen
 
 #### Projets Personnels
 
+- **FocusFlow - AI Productivity App** : Application de productivité alimentée par l'IA avec planification quotidienne, suggestions automatiques, suivi du temps de concentration et visualisations (React, OpenAI API, Node.js)
 - **E-Commerce Task Manager** : Gestionnaire de tâches full-stack avec Redux Toolkit, React, Node.js et PostgreSQL
 
 Chaque projet inclut :
@@ -214,7 +215,9 @@ src/
 │   │   └── utils/      # Utilitaires des sections
 │   ├── demos/          # Démonstrations interactives
 │   │   ├── ecommerce/  # Composants E-Commerce Task Manager
+│   │   ├── focusflow/  # Composants FocusFlow AI App
 │   │   ├── ECommerceTaskManagerDemo.tsx
+│   │   ├── FocusFlowDemo.tsx
 │   │   ├── RoadEditorDemo.tsx
 │   │   ├── RobotInterfaceDemo.tsx
 │   │   ├── ROICalculatorDemo.tsx
@@ -240,6 +243,15 @@ src/
 ## 🎮 Démonstrations Interactives
 
 Tous les projets incluent des démonstrations fonctionnelles :
+
+### FocusFlow - AI Productivity App
+- **Assistant IA** : Suggestions intelligentes basées sur vos tâches
+- **Planificateur quotidien** : Génération automatique de plans optimisés
+- **Dashboard analytics** : Statistiques de productivité en temps réel
+- **Suivi du temps de concentration** : Mesure automatique du temps focalisé
+- **Résumés intelligents** : Analyses hebdomadaires de vos performances
+- **Catégorisation** : Organisation par travail, personnel, santé, apprentissage
+- **Simulation OpenAI API** : Démonstration d'intégration API réelle
 
 ### E-Commerce Task Manager
 - **Kanban Board** : Gestion visuelle des tâches
